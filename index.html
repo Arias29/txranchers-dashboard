@@ -133,7 +133,7 @@
 <div id="app" style="display:none">
   <header>
     <div class="wrap hbar">
-      <div class="mark">Texas Ranchers<span>Sales &amp; Membership</span></div>
+      <div class="mark">Texas Ranchers<span>Revenue &amp; Membership</span></div>
       <div class="controls">
         <select id="monthSel"></select>
         <label class="toggle"><input type="checkbox" id="exInternal"> Exclude internal</label>
@@ -212,11 +212,9 @@ function parseDate(str){
 }
 
 function monthStart(dateStr){
-  if(!dateStr) return null;
-  const slash=dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if(slash) return new Date(parseInt(slash[3]),parseInt(slash[1])-1,1);
-  const d=new Date(dateStr);
-  return isNaN(d)?null:new Date(d.getFullYear(),d.getMonth(),1);
+  const d=parseDate(dateStr);
+  if(!d) return null;
+  return new Date(d.getFullYear(),d.getMonth(),1);
 }
 
 function fmtMonth(d){
@@ -262,7 +260,7 @@ async function loadData(){
 
     // Determine latest complete month
     const now=new Date();
-    const latest=new Date(now.getFullYear(),now.getMonth(),1);
+    const latest=new Date(now.getFullYear(),now.getMonth()-1,1);
     const prior=new Date(now.getFullYear(),now.getMonth()-2,1);
     currentMonth=latest;
     priorMonth=prior;
@@ -272,7 +270,7 @@ async function loadData(){
     const months=[...new Set(SUMMARY.map(r=>r['Month Start']).filter(Boolean))]
       .map(s=>parseDate(s)).filter(Boolean)
       .sort((a,b)=>b-a);
-    months.filter(m=>m.getFullYear()>=2026).forEach(m=>{
+    months.forEach(m=>{
       const opt=document.createElement('option');
       opt.value=m.toISOString();
       opt.textContent=fmtMonth(m)+(m.getTime()===latest.getTime()?' (latest)':'');
@@ -351,11 +349,11 @@ function renderDashboard(){
   // Summary months for charts
   const summaryMonths=SUMMARY.map(r=>({
     ts:parseDate(r['Month Start']),
-    merch:parseFloat(String(r['Merchandise Sales']).replace(/[$,]/g,''))||0,
-    mem:parseFloat(String(r['Membership Sales']).replace(/[$,]/g,''))||0,
+    merch:parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0,
+    mem:parseFloat(String(r['Membership Revenue']).replace(/[$,]/g,''))||0,
     active:parseFloat(r['Active Members'])||0,
     newM:parseFloat(r['New Members'])||0,
-    mrr:parseFloat(String(r['Membership Sales']).replace(/[$,]/g,''))||0
+    mrr:parseFloat(String(r['Membership Revenue']).replace(/[$,]/g,''))||0
   })).filter(r=>r.ts).sort((a,b)=>a.ts-b.ts);
 
   const d1=fmtDelta(totalRev,totalRevP);
@@ -404,7 +402,7 @@ function renderDashboard(){
   <!-- HERO -->
   <section class="hero">
     <div class="stat" onclick="openCardDrawer('totalRev')">
-      <div class="k">Total Sales</div><div class="v">${fmtCurrency(totalRev)}</div>
+      <div class="k">Total Revenue</div><div class="v">${fmtCurrency(totalRev)}</div>
       <div class="delta ${d1.cls}">${d1.html}</div>
     </div>
     <div class="stat" onclick="openCardDrawer('mrr')">
@@ -424,8 +422,8 @@ function renderDashboard(){
   <!-- YTD BAND -->
   <section class="ytd">
     <div class="ytd-tag">2026<br>YTD</div>
-    <div class="ytd-item" onclick="openYtdDrawer('total')"><span class="yl">Total Sales</span><span class="yv">${fmtCurrency(ytdTotal)}</span></div>
-    <div class="ytd-item" onclick="openYtdDrawer('merch')"><span class="yl">Merchandise</span><span class="yv">${fmtCurrency(ytdMerch)}</span></div>
+    <div class="ytd-item" onclick="openYtdDrawer('total')"><span class="yl">Total Revenue</span><span class="yv">${fmtCurrency(ytdTotal)}</span></div>
+    <div class="ytd-item" onclick="openYtdDrawer('merch')"><span class="yl">Merch</span><span class="yv">${fmtCurrency(ytdMerch)}</span></div>
     <div class="ytd-item" onclick="openYtdDrawer('membership')"><span class="yl">Membership</span><span class="yv">${fmtCurrency(ytdMem)}</span></div>
     <div class="ytd-item" onclick="openYtdDrawer('active')"><span class="yl">Active Members · now</span><span class="yv">${activeMem}</span></div>
     <div class="ytd-item" onclick="openYtdDrawer('orders')"><span class="yl">Merch Orders</span><span class="yv">${ytdMerchOrders}</span></div>
@@ -458,14 +456,14 @@ function renderDashboard(){
         </div>
       </div>
     </div>
-    
+    <div class="note">Membership status derived from Shopify subscription orders. Dips may include billing-cycle timing, not only cancellations.</div>
   </section>
 
   <!-- REVENUE TREND -->
   <div class="eyebrow"><span class="tag">Context</span> Revenue Over Time</div>
   <section class="panel">
     <div class="ptitle"><h3>Monthly revenue by stream</h3><span class="sub">Merch + membership · full history</span></div>
-    
+    <div class="callout neutral">Merch is <b style="color:var(--bone)">event-driven</b>. The big spikes are tentpole months. Current-month softness is likely seasonal, not a decline.</div>
     <div class="chart-host" style="height:300px"><canvas id="revChart"></canvas></div>
   </section>
 
@@ -475,7 +473,7 @@ function renderDashboard(){
     <section class="panel">
       <div class="ptitle"><h3>Top products</h3><span class="hint">Click any product</span></div>
       <div class="prod-list" id="prodList"></div>
-      
+      <div class="note">All-time · customer orders${document.getElementById('exInternal').checked?' only':' (includes internal)'}</div>
     </section>
     <section class="panel">
       <div class="ptitle"><h3>Category mix</h3><span class="hint">Click a slice</span></div>
@@ -483,7 +481,7 @@ function renderDashboard(){
     </section>
   </div>
 
-  
+  <footer>Data source: Shopify online sales only. Square in-person and TIXR ticketing not included — figures will not match QuickBooks totals.</footer>
   `;
 
   // Month buttons
@@ -593,7 +591,7 @@ function openCardDrawer(key){
   const label=fmtMonth(cm);
   if(key==='totalRev'){
     const rows=s.cmOrders.map(r=>[r['Order Name'],fmtDate(r['Created At']),r['Email'],r['Product Category'],fmtCurrency(r['Adjusted Revenue'])]);
-    openDrawer(`${label} · All Revenue`,'Total Sales',[{l:'Total',v:fmtCurrency(s.totalRev)},{l:'Merch',v:fmtCurrency(s.merchRev)},{l:'Membership',v:fmtCurrency(s.mrr)}],['Order','Date','Customer','Type','Revenue'],rows);
+    openDrawer(`${label} · All Revenue`,'Total Revenue',[{l:'Total',v:fmtCurrency(s.totalRev)},{l:'Merch',v:fmtCurrency(s.merchRev)},{l:'Membership',v:fmtCurrency(s.mrr)}],['Order','Date','Customer','Type','Revenue'],rows);
   } else if(key==='mrr'){
     const rows=s.memCm.map(r=>[r['Email'],r['Membership Tier'],r['Subscription Event'],fmtCurrency(r['Adjusted Revenue'])]);
     openDrawer(`${label} · Membership`,'MRR',[{l:'MRR',v:fmtCurrency(s.mrr)},{l:'Members',v:String(s.activeMem)}],['Member','Tier','Status','Charge'],rows);
@@ -612,23 +610,23 @@ function openYtdDrawer(key){
   const ytdSum=SUMMARY.filter(r=>{const d=parseDate(r['Month Start']);return d&&d>=ytdStart&&d<=s.cm;});
   if(key==='total'){
     const rows=ytdSum.map(r=>{
-      const m=parseFloat(String(r['Merchandise Sales']).replace(/[$,]/g,''))||0;
-      const mem=parseFloat(String(r['Membership Sales']).replace(/[$,]/g,''))||0;
+      const m=parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0;
+      const mem=parseFloat(String(r['Membership Revenue']).replace(/[$,]/g,''))||0;
       return [fmtMonth(parseDate(r['Month Start'])),fmtCurrency(m),fmtCurrency(mem),fmtCurrency(m+mem)];
     });
-    openDrawer('2026 YTD · All Sales','Total Sales',[{l:'Total',v:fmtCurrency(s.ytdTotal)}],['Month','Merch','Membership','Total'],rows);
+    openDrawer('2026 YTD · All Streams','Total Revenue',[{l:'Total',v:fmtCurrency(s.ytdTotal)}],['Month','Merch','Membership','Total'],rows);
   } else if(key==='merch'){
-    const rows=ytdSum.map(r=>[fmtMonth(parseDate(r['Month Start'])),fmtCurrency(parseFloat(String(r['Merchandise Sales']).replace(/[$,]/g,''))||0),r['Merch Orders']||'—',r['Merch Units']||'—']);
-    openDrawer('2026 YTD · Merchandise','Merchandise Sales',[{l:'Merch',v:fmtCurrency(s.ytdMerch)},{l:'Orders',v:String(s.ytdMerchOrders)}],['Month','Revenue','Orders','Units'],rows);
+    const rows=ytdSum.map(r=>[fmtMonth(parseDate(r['Month Start'])),fmtCurrency(parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0),r['Merch Orders']||'—',r['Merch Units']||'—']);
+    openDrawer('2026 YTD · Merchandise','Merch Revenue',[{l:'Merch',v:fmtCurrency(s.ytdMerch)},{l:'Orders',v:String(s.ytdMerchOrders)}],['Month','Revenue','Orders','Units'],rows);
   } else if(key==='membership'){
-    const rows=ytdSum.map(r=>[fmtMonth(parseDate(r['Month Start'])),fmtCurrency(parseFloat(String(r['Membership Sales']).replace(/[$,]/g,''))||0),r['Active Members']||'0',r['New Members']||'0']);
-    openDrawer('2026 YTD · TRAP','Membership Sales',[{l:'Total',v:fmtCurrency(s.ytdMem)},{l:'Active now',v:String(s.activeMem)}],['Month','MRR','Active','New'],rows);
+    const rows=ytdSum.map(r=>[fmtMonth(parseDate(r['Month Start'])),fmtCurrency(parseFloat(String(r['Membership Revenue']).replace(/[$,]/g,''))||0),r['Active Members']||'0',r['New Members']||'0']);
+    openDrawer('2026 YTD · TRAP','Membership Revenue',[{l:'Total',v:fmtCurrency(s.ytdMem)},{l:'Active now',v:String(s.activeMem)}],['Month','MRR','Active','New'],rows);
   } else if(key==='active'){
     const rows=s.memCm.map(r=>[r['Email'],r['Membership Tier'],r['Subscription Event'],fmtDate(r['Created At'])]);
     openDrawer('Current · Active Members','Active Members',[{l:'Active',v:String(s.activeMem)},{l:'Adult',v:String(s.adultCount)},{l:'Junior',v:String(s.juniorCount)}],['Member','Tier','Status','Last Charge'],rows);
   } else if(key==='orders'){
     const rows=ytdSum.map(r=>{
-      const rev=parseFloat(String(r['Merchandise Sales']).replace(/[$,]/g,''))||0;
+      const rev=parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0;
       const ords=parseInt(r['Merch Orders'])||0;
       return [fmtMonth(parseDate(r['Month Start'])),String(ords),fmtCurrency(rev),ords?fmtCurrency(rev/ords):'—'];
     });
