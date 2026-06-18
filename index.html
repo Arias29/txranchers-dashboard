@@ -135,7 +135,6 @@
     <div class="wrap hbar">
       <div class="mark">Texas Ranchers<span>Revenue &amp; Membership</span></div>
       <div class="controls">
-        <select id="monthSel"></select>
         <label class="toggle"><input type="checkbox" id="exInternal"> Exclude internal</label>
         <a class="glink" href="https://docs.google.com/spreadsheets/d/1_2yQg56wqCuBA4WOyj4JrWyOLQeQR-3IO1Ju7V96y_g" target="_blank">View in Sheets ↗</a>
       </div>
@@ -258,32 +257,11 @@ async function loadData(){
     summaryHeaders=sum.headers;
     ordersHeaders=ord.headers;
 
-    // Determine latest month with order data, fall back to prior calendar month
+    // Lock to last full calendar month
     const now=new Date();
-    const latestOrderMonth=ORDERS.map(r=>monthStart(r['Created At'])).filter(Boolean).sort((a,b)=>b-a)[0];
-    const latest=latestOrderMonth||new Date(now.getFullYear(),now.getMonth()-1,1);
-    const prior=new Date(latest.getFullYear(),latest.getMonth()-1,1);
-    currentMonth=latest;
-    priorMonth=prior;
+    currentMonth=new Date(now.getFullYear(),now.getMonth()-1,1);
+    priorMonth=new Date(now.getFullYear(),now.getMonth()-2,1);
 
-    // Populate month selector
-    const sel=document.getElementById('monthSel');
-    const months=[...new Set(SUMMARY.map(r=>r['Month Start']).filter(Boolean))]
-      .map(s=>parseDate(s)).filter(Boolean)
-      .sort((a,b)=>b-a);
-    months.forEach(m=>{
-      const opt=document.createElement('option');
-      opt.value=m.toISOString();
-      opt.textContent=fmtMonth(m)+(m.getTime()===latest.getTime()?' (latest)':'');
-      if(m.getTime()===latest.getTime()) opt.selected=true;
-      sel.appendChild(opt);
-    });
-    sel.addEventListener('change',()=>{
-      currentMonth=new Date(sel.value);
-      const idx=months.findIndex(m=>m.getTime()===currentMonth.getTime());
-      priorMonth=months[idx+1]||null;
-      renderDashboard();
-    });
     document.getElementById('exInternal').addEventListener('change',renderDashboard);
     renderDashboard();
   } catch(e){
