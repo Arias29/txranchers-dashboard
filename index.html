@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Texas Ranchers — Revenue & Membership</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0E0F11;--panel:#16181C;--panel-2:#1C1F24;--line:#2A2E35;
+    --red:#C8102E;--red-soft:#E04B62;--bone:#F5F0E8;--bone-dim:#A8A39B;
+    --green:#5FB87A;--ink-dim:#6E727A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--bone);font-family:"Inter","Helvetica Neue",Arial,sans-serif;line-height:1.45;padding:0 0 64px}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+  header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#121317 0%,var(--bg) 100%);position:sticky;top:0;z-index:10;backdrop-filter:blur(6px)}
+  .hbar{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 0;flex-wrap:wrap}
+  .mark{font-weight:800;letter-spacing:.16em;text-transform:uppercase;font-size:15px;color:var(--bone);border-left:3px solid var(--red);padding-left:12px;line-height:1.05}
+  .mark span{display:block;color:var(--bone-dim);font-size:10px;letter-spacing:.28em;font-weight:600}
+  .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  select,.glink{background:var(--panel-2);color:var(--bone);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:12.5px;font-family:inherit;cursor:pointer}
+  .toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;user-select:none}
+  .toggle input{accent-color:var(--red);cursor:pointer}
+  .glink{text-decoration:none;color:var(--bone-dim)}
+  .glink:hover{color:var(--bone);border-color:var(--red)}
+  .stamp{color:var(--ink-dim);font-size:11px}
+  .eyebrow{display:flex;align-items:center;gap:10px;text-transform:uppercase;letter-spacing:.22em;font-size:10.5px;font-weight:700;color:var(--bone-dim);margin:38px 0 14px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+  .eyebrow .tag{color:var(--red)}
+  .hero{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;cursor:pointer;transition:border-color .15s}
+  .stat:hover{border-color:var(--red)}
+  .stat .k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-dim);font-weight:600}
+  .stat .v{font-size:28px;font-weight:800;letter-spacing:-.02em;margin-top:8px;font-variant-numeric:tabular-nums}
+  .delta{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;margin-top:8px}
+  .delta.up{color:var(--green)}.delta.dn{color:var(--red-soft)}
+  .delta .mo{color:var(--ink-dim);font-weight:500}
+  .ytd{display:flex;align-items:stretch;flex-wrap:wrap;margin-top:14px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:13px 6px}
+  .ytd-tag{font-size:10px;letter-spacing:.18em;text-transform:uppercase;font-weight:800;color:var(--red);padding:0 18px;border-right:1px solid var(--line);display:flex;align-items:center;line-height:1.2}
+  .ytd-item{display:flex;flex-direction:column;justify-content:center;padding:2px 20px;border-right:1px solid var(--line);cursor:pointer}
+  .ytd-item:last-child{border-right:none}
+  .ytd-item:hover .yv{color:var(--red-soft)}
+  .yl{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--bone-dim);font-weight:600}
+  .yv{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:3px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+  .panel.center{border-color:#3a2026;box-shadow:0 0 0 1px rgba(200,16,46,.12),0 18px 40px -28px rgba(200,16,46,.5)}
+  .ptitle{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:4px}
+  .ptitle h3{font-size:16px;font-weight:700}
+  .ptitle .sub{font-size:11.5px;color:var(--ink-dim)}
+  .callout{font-size:13px;background:rgba(200,16,46,.08);border-left:3px solid var(--red);border-radius:0 8px 8px 0;padding:10px 14px;margin:12px 0 16px;line-height:1.6}
+  .callout b{color:var(--red-soft)}
+  .callout.neutral{background:rgba(245,240,232,.04);border-left-color:var(--bone-dim)}
+  .chart-host{position:relative;width:100%}
+  .grid-2{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-top:14px}
+  .grid-ops{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+  .tier-row{display:grid;grid-template-columns:180px 1fr;gap:18px;align-items:center;margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+  .tier-chips{display:flex;gap:10px;flex-wrap:wrap}
+  .tchip{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:11px 14px;cursor:pointer;min-width:120px;transition:border-color .15s}
+  .tchip:hover{border-color:var(--red)}
+  .tchip .tn{font-size:11px;color:var(--bone-dim);text-transform:uppercase;letter-spacing:.08em;font-weight:600;display:flex;align-items:center;gap:6px}
+  .tchip .dot{width:9px;height:9px;border-radius:50%}
+  .tchip .tv{font-size:20px;font-weight:800;margin-top:5px}
+  .tchip .tm{font-size:11px;color:var(--ink-dim);margin-top:2px}
+  .mo-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .mo-btn{background:var(--panel-2);border:1px solid var(--line);border-radius:6px;color:var(--bone-dim);font-size:11px;padding:5px 10px;cursor:pointer;font-family:inherit;transition:border-color .15s}
+  .mo-btn:hover{border-color:var(--red);color:var(--bone)}
+  .prod-list{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+  .prow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;cursor:pointer;padding:4px;border-radius:6px;transition:background .15s}
+  .prow:hover{background:var(--panel-2)}
+  .prow .nm{font-size:13px}
+  .prow .amt{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+  .bar{grid-column:1/3;height:6px;background:var(--panel-2);border-radius:3px;overflow:hidden}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--red),var(--red-soft));border-radius:3px}
+  .hint{font-size:10.5px;color:var(--ink-dim);display:flex;align-items:center;gap:5px}
+  .hint::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--red);opacity:.7}
+  .note{color:var(--ink-dim);font-size:11px;margin-top:10px;font-style:italic}
+  footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--ink-dim);font-size:11.5px}
+  /* Password screen */
+  .pw-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100}
+  .pw-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:36px 32px;width:360px}
+  .pw-box .eye{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);font-weight:800;margin-bottom:8px}
+  .pw-box h2{font-size:22px;font-weight:800;margin-bottom:4px}
+  .pw-box p{font-size:13px;color:var(--bone-dim);margin-bottom:24px}
+  .pw-box input{width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--bone);padding:10px 14px;font-size:14px;font-family:inherit;margin-bottom:12px}
+  .pw-box input:focus{outline:none;border-color:var(--red)}
+  .pw-box button{width:100%;background:var(--red);color:#fff;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.04em}
+  .pw-box button:hover{background:var(--red-soft)}
+  .pw-err{color:var(--red-soft);font-size:12px;margin-top:8px;display:none}
+  /* Loading */
+  .loading{display:flex;align-items:center;justify-content:center;height:200px;color:var(--bone-dim);font-size:13px;gap:10px}
+  .spinner{width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--red);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  /* Backdrop + Drawer */
+  .backdrop{position:fixed;inset:0;background:rgba(6,7,8,.65);opacity:0;pointer-events:none;transition:opacity .25s;z-index:50}
+  .backdrop.open{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(520px,93vw);background:var(--panel);border-left:1px solid var(--line);transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);z-index:51;display:flex;flex-direction:column;box-shadow:-30px 0 60px -30px rgba(0,0,0,.7)}
+  .drawer.open{transform:translateX(0)}
+  .dhead{padding:22px 24px 16px;border-bottom:1px solid var(--line);position:relative}
+  .dhead .deye{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--red);font-weight:700}
+  .dhead h2{font-size:19px;font-weight:800;margin-top:6px}
+  .dclose{position:absolute;top:18px;right:18px;background:var(--panel-2);border:1px solid var(--line);color:var(--bone-dim);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
+  .dclose:hover{border-color:var(--red);color:var(--bone)}
+  .dbody{padding:20px 24px;overflow-y:auto;flex:1}
+  .dchips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .dchip{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;flex:1;min-width:90px}
+  .dchip .cl{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--bone-dim);font-weight:600}
+  .dchip .cv{font-size:17px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
+  .dtl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-dim);font-weight:700;margin:6px 0 10px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;color:var(--ink-dim);font-weight:600;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:8px;border-bottom:1px solid var(--line)}
+  td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.04);font-variant-numeric:tabular-nums}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .empty{color:var(--ink-dim);font-size:13px;padding:24px 4px;text-align:center}
+  @media(max-width:900px){.hero{grid-template-columns:repeat(2,1fr)}.grid-2,.grid-ops,.tier-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD SCREEN -->
+<div class="pw-screen" id="pwScreen">
+  <div class="pw-box">
+    <div class="eye">Texas Ranchers</div>
+    <h2>Revenue Dashboard</h2>
+    <p>Enter the access password to continue.</p>
+    <input type="password" id="pwInput" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()">
+    <button onclick="checkPw()">Enter</button>
+    <div class="pw-err" id="pwErr">Incorrect password.</div>
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until authenticated) -->
+<div id="app" style="display:none">
+  <header>
+    <div class="wrap hbar">
+      <div class="mark">Texas Ranchers<span>Revenue &amp; Membership</span></div>
+      <div class="controls">
+        <select id="monthSel"></select>
+        <label class="toggle"><input type="checkbox" id="exInternal"> Exclude internal</label>
+        <a class="glink" href="https://docs.google.com/spreadsheets/d/1_2yQg56wqCuBA4WOyj4JrWyOLQeQR-3IO1Ju7V96y_g" target="_blank">View in Sheets ↗</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap" id="mainContent">
+    <div class="loading"><div class="spinner"></div> Loading live data…</div>
+  </div>
+</div>
+
+<!-- BACKDROP + DRAWER -->
+<div class="backdrop" id="backdrop" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer">
+  <div class="dhead">
+    <div class="deye" id="dEye"></div>
+    <h2 id="dTitle"></h2>
+    <button class="dclose" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="dbody">
+    <div class="dchips" id="dChips"></div>
+    <div class="dtl">Transactions</div>
+    <div id="dTable"></div>
+  </div>
+</aside>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+const API_KEY   = "AIzaSyCdRB6S_aaOJP1IhZPQranH6nv_JCFyB48";
+const SHEET_ID  = "1_2yQg56wqCuBA4WOyj4JrWyOLQeQR-3IO1Ju7V96y_g";
+const PASSWORD  = "ranchers2026";
+const RED="#C8102E",REDSOFT="#E04B62",BONE="#F5F0E8",BONEDIM="#A8A39B",GREEN="#5FB87A",LINE="#2A2E35",PANEL2="#1C1F24";
+
+// ── PASSWORD ────────────────────────────────────────────────────────────────
+function checkPw(){
+  const v=document.getElementById('pwInput').value;
+  if(v===PASSWORD){
+    document.getElementById('pwScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    loadData();
+  } else {
+    document.getElementById('pwErr').style.display='block';
+  }
+}
+document.getElementById('pwInput').addEventListener('keydown',e=>{if(e.key==='Enter')checkPw();});
+
+// ── DATA ────────────────────────────────────────────────────────────────────
+let SUMMARY=[], ORDERS=[], currentMonth=null, priorMonth=null;
+let summaryHeaders=[], ordersHeaders=[];
+
+async function fetchSheet(range){
+  const url=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
+  const r=await fetch(url);
+  if(!r.ok) throw new Error(`Sheet fetch failed: ${r.status}`);
+  const d=await r.json();
+  return d.values||[];
+}
+
+function parseRows(values){
+  if(!values.length) return {headers:[],rows:[]};
+  const headers=values[0];
+  const rows=values.slice(1).map(r=>{
+    const obj={};
+    headers.forEach((h,i)=>obj[h]=r[i]||'');
+    return obj;
+  });
+  return {headers,rows};
+}
+
+function parseDate(str){
+  if(!str) return null;
+  const d=new Date(str);
+  return isNaN(d)?null:d;
+}
+
+function monthStart(dateStr){
+  const d=parseDate(dateStr);
+  if(!d) return null;
+  return new Date(d.getFullYear(),d.getMonth(),1);
+}
+
+function fmtMonth(d){
+  if(!d) return '';
+  return d.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+}
+
+function fmtCurrency(v){
+  const n=parseFloat(String(v).replace(/[$,]/g,''));
+  if(isNaN(n)) return '$0.00';
+  return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function fmtDelta(curr,prior){
+  if(!prior||prior===0) return {html:'—',cls:''};
+  const pct=((curr-prior)/prior)*100;
+  const arrow=pct>=0?'▲':'▼';
+  const cls=pct>=0?'up':'dn';
+  return {html:`${arrow} ${Math.abs(pct).toFixed(1)}% <span class="mo">vs prior mo</span>`,cls};
+}
+
+function getSummaryVal(col,monthTs){
+  const row=SUMMARY.find(r=>{
+    const d=parseDate(r['Month Start']);
+    return d && d.getFullYear()===monthTs.getFullYear() && d.getMonth()===monthTs.getMonth();
+  });
+  if(!row||!(col in row)) return 0;
+  return parseFloat(String(row[col]).replace(/[$,]/g,''))||0;
+}
+
+async function loadData(){
+  try{
+    const [sumVals,ordVals]=await Promise.all([
+      fetchSheet('Monthly Summary!A:P'),
+      fetchSheet('Orders!A:BF')
+    ]);
+    const sum=parseRows(sumVals);
+    const ord=parseRows(ordVals);
+    SUMMARY=sum.rows;
+    ORDERS=ord.rows;
+    summaryHeaders=sum.headers;
+    ordersHeaders=ord.headers;
+
+    // Determine latest complete month
+    const now=new Date();
+    const latest=new Date(now.getFullYear(),now.getMonth()-1,1);
+    const prior=new Date(now.getFullYear(),now.getMonth()-2,1);
+    currentMonth=latest;
+    priorMonth=prior;
+
+    // Populate month selector
+    const sel=document.getElementById('monthSel');
+    const months=[...new Set(SUMMARY.map(r=>r['Month Start']).filter(Boolean))]
+      .map(s=>parseDate(s)).filter(Boolean)
+      .sort((a,b)=>b-a);
+    months.forEach(m=>{
+      const opt=document.createElement('option');
+      opt.value=m.toISOString();
+      opt.textContent=fmtMonth(m)+(m.getTime()===latest.getTime()?' (latest)':'');
+      if(m.getTime()===latest.getTime()) opt.selected=true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change',()=>{
+      currentMonth=new Date(sel.value);
+      const idx=months.findIndex(m=>m.getTime()===currentMonth.getTime());
+      priorMonth=months[idx+1]||null;
+      renderDashboard();
+    });
+    document.getElementById('exInternal').addEventListener('change',renderDashboard);
+    renderDashboard();
+  } catch(e){
+    document.getElementById('mainContent').innerHTML=`<div class="loading" style="color:var(--red-soft)">Failed to load data: ${e.message}</div>`;
+  }
+}
+
+// ── FILTERED ORDERS ─────────────────────────────────────────────────────────
+function filteredOrders(){
+  const excl=document.getElementById('exInternal').checked;
+  return ORDERS.filter(r=>!excl || r['Segment']==='Customer' || (r['Email']&&!r['Email'].includes('@txranchers.com')));
+}
+
+// ── RENDER ───────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const cm=currentMonth, pm=priorMonth;
+  const fOrders=filteredOrders();
+
+  // Helper: orders in a month
+  function ordersInMonth(ts){
+    return fOrders.filter(r=>{
+      const d=monthStart(r['Created At']);
+      return d && d.getTime()===ts.getTime();
+    });
+  }
+
+  const cmOrders=ordersInMonth(cm);
+  const pmOrders=pm?ordersInMonth(pm):[];
+
+  function sumField(rows,field){
+    return rows.reduce((acc,r)=>acc+(parseFloat(String(r[field]).replace(/[$,]/g,''))||0),0);
+  }
+
+  // Current month metrics
+  const merchCm=cmOrders.filter(r=>r['Product Category']==='Merchandise');
+  const memCm  =cmOrders.filter(r=>r['Product Category']==='Membership');
+  const merchPm=pmOrders.filter(r=>r['Product Category']==='Merchandise');
+  const memPm  =pmOrders.filter(r=>r['Product Category']==='Membership');
+
+  const merchRev =sumField(merchCm,'Adjusted Revenue');
+  const merchRevP=sumField(merchPm,'Adjusted Revenue');
+  const mrr      =sumField(memCm,'Adjusted Revenue');
+  const mrrP     =sumField(memPm,'Adjusted Revenue');
+  const totalRev =merchRev+mrr;
+  const totalRevP=merchRevP+mrrP;
+
+  // Active members: distinct emails with membership charge this month
+  const activeMem=new Set(memCm.map(r=>r['Email'].toLowerCase())).size;
+  const activeMemP=pm?new Set(memPm.map(r=>r['Email'].toLowerCase())).size:0;
+  const newMem=memCm.filter(r=>r['Subscription Event']==='First Order').length;
+  const newMemP=pm?memPm.filter(r=>r['Subscription Event']==='First Order').length:0;
+
+  // YTD
+  const ytdStart=new Date(cm.getFullYear(),0,1);
+  const ytdOrders=fOrders.filter(r=>{
+    const d=monthStart(r['Created At']);
+    return d && d>=ytdStart && d<=cm;
+  });
+  const ytdMerch=sumField(ytdOrders.filter(r=>r['Product Category']==='Merchandise'),'Adjusted Revenue');
+  const ytdMem  =sumField(ytdOrders.filter(r=>r['Product Category']==='Membership'),'Adjusted Revenue');
+  const ytdTotal=ytdMerch+ytdMem;
+  const ytdMerchOrders=new Set(ytdOrders.filter(r=>r['Product Category']==='Merchandise').map(r=>r['Order Name'])).size;
+
+  // Summary months for charts
+  const summaryMonths=SUMMARY.map(r=>({
+    ts:parseDate(r['Month Start']),
+    merch:parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0,
+    mem:parseFloat(String(r['Membership Revenue']).replace(/[$,]/g,''))||0,
+    active:parseFloat(r['Active Members'])||0,
+    newM:parseFloat(r['New Members'])||0,
+    mrr:parseFloat(String(r['Membership Revenue']).replace(/[$,]/g,''))||0
+  })).filter(r=>r.ts).sort((a,b)=>a.ts-b.ts);
+
+  const d1=fmtDelta(totalRev,totalRevP);
+  const d2=fmtDelta(mrr,mrrP);
+  const d3=fmtDelta(activeMem,activeMemP);
+  const d4=fmtDelta(newMem,newMemP);
+
+  // Tier counts
+  const adultCount=new Set(memCm.filter(r=>r['Membership Tier']==='Adult').map(r=>r['Email'].toLowerCase())).size;
+  const juniorCount=new Set(memCm.filter(r=>r['Membership Tier']==='Junior').map(r=>r['Email'].toLowerCase())).size;
+  const seniorCount=new Set(memCm.filter(r=>r['Membership Tier']==='Senior').map(r=>r['Email'].toLowerCase())).size;
+  const adultMrr=adultCount*150, juniorMrr=juniorCount*160, seniorMrr=seniorCount*150;
+
+  // Top products
+  const prodMap={};
+  fOrders.filter(r=>r['Product Category']==='Merchandise').forEach(r=>{
+    const n=r['Line Item Title'],v=parseFloat(String(r['Adjusted Revenue']).replace(/[$,]/g,''))||0;
+    if(n) prodMap[n]=(prodMap[n]||0)+v;
+  });
+  const topProds=Object.entries(prodMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const maxProd=topProds[0]?topProds[0][1]:1;
+
+  // Category mix
+  const catMap={};
+  fOrders.filter(r=>r['Product Category']==='Merchandise').forEach(r=>{
+    const c=r['Merch Bucket']||'Other',v=parseFloat(String(r['Adjusted Revenue']).replace(/[$,]/g,''))||0;
+    catMap[c]=(catMap[c]||0)+v;
+  });
+  const catEntries=Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
+
+  // Membership callout text
+  const lastNewIdx=[...summaryMonths].reverse().findIndex(m=>m.newM>0);
+  const calloutText=lastNewIdx>0
+    ?`Acquisition has <b>paused</b>. After a surge in ${fmtMonth(summaryMonths[summaryMonths.length-1-lastNewIdx+1]?.ts)}, new members fell to zero while the active base declined. The recurring engine is contracting — <b>retention is the priority, not volume.</b>`
+    :`Acquisition has <b>paused</b>. New member signups have stalled while active members are declining. <b>Retention is the priority.</b>`;
+
+  document.getElementById('mainContent').innerHTML=`
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:26px;flex-wrap:wrap;gap:10px">
+    <div>
+      <div style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--bone-dim);font-weight:700">State of the Business</div>
+      <div style="font-size:13px;color:var(--ink-dim);margin-top:4px">Period: <b style="color:var(--bone)">${fmtMonth(cm)}</b> · compared to ${pm?fmtMonth(pm):'prior month'}</div>
+    </div>
+    <div class="stamp">Live data · refreshed on load</div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="stat" onclick="openCardDrawer('totalRev')">
+      <div class="k">Total Revenue</div><div class="v">${fmtCurrency(totalRev)}</div>
+      <div class="delta ${d1.cls}">${d1.html}</div>
+    </div>
+    <div class="stat" onclick="openCardDrawer('mrr')">
+      <div class="k">MRR</div><div class="v">${fmtCurrency(mrr)}</div>
+      <div class="delta ${d2.cls}">${d2.html}</div>
+    </div>
+    <div class="stat" onclick="openCardDrawer('active')">
+      <div class="k">Active Members</div><div class="v">${activeMem}</div>
+      <div class="delta ${d3.cls}">${d3.html}</div>
+    </div>
+    <div class="stat" onclick="openCardDrawer('new')">
+      <div class="k">New Members</div><div class="v">${newMem}</div>
+      <div class="delta ${d4.cls}">${d4.html}</div>
+    </div>
+  </section>
+
+  <!-- YTD BAND -->
+  <section class="ytd">
+    <div class="ytd-tag">2026<br>YTD</div>
+    <div class="ytd-item" onclick="openYtdDrawer('total')"><span class="yl">Total Revenue</span><span class="yv">${fmtCurrency(ytdTotal)}</span></div>
+    <div class="ytd-item" onclick="openYtdDrawer('merch')"><span class="yl">Merch</span><span class="yv">${fmtCurrency(ytdMerch)}</span></div>
+    <div class="ytd-item" onclick="openYtdDrawer('membership')"><span class="yl">Membership</span><span class="yv">${fmtCurrency(ytdMem)}</span></div>
+    <div class="ytd-item" onclick="openYtdDrawer('active')"><span class="yl">Active Members · now</span><span class="yv">${activeMem}</span></div>
+    <div class="ytd-item" onclick="openYtdDrawer('orders')"><span class="yl">Merch Orders</span><span class="yv">${ytdMerchOrders}</span></div>
+  </section>
+
+  <!-- MEMBERSHIP HEALTH -->
+  <div class="eyebrow"><span class="tag">Priority</span> Membership Health</div>
+  <section class="panel center">
+    <div class="ptitle"><h3>TRAP recurring membership</h3><span class="hint">Click a month or tier for detail</span></div>
+    <div class="callout">${calloutText}</div>
+    <div class="grid-2">
+      <div class="chart-host" style="height:280px"><canvas id="memChart"></canvas></div>
+      <div class="chart-host" style="height:280px"><canvas id="mrrChart"></canvas></div>
+    </div>
+    <div class="mo-btns" id="moBtns"></div>
+    <div class="tier-row">
+      <div class="chart-host" style="height:160px"><canvas id="tierChart"></canvas></div>
+      <div class="tier-chips">
+        <div class="tchip" onclick="openTierDrawer('Adult')">
+          <div class="tn"><span class="dot" style="background:var(--red)"></span>Adult</div>
+          <div class="tv">${adultCount}</div><div class="tm">${fmtCurrency(adultMrr)} MRR · $150</div>
+        </div>
+        <div class="tchip" onclick="openTierDrawer('Junior')">
+          <div class="tn"><span class="dot" style="background:#E8836F"></span>Junior</div>
+          <div class="tv">${juniorCount}</div><div class="tm">${fmtCurrency(juniorMrr)} MRR · $160</div>
+        </div>
+        <div class="tchip" onclick="openTierDrawer('Senior')">
+          <div class="tn"><span class="dot" style="background:#C9A24B"></span>Senior</div>
+          <div class="tv">${seniorCount}</div><div class="tm">${seniorCount?fmtCurrency(seniorMrr)+' MRR · $150':'no members yet'}</div>
+        </div>
+      </div>
+    </div>
+    <div class="note">Membership status derived from Shopify subscription orders. Dips may include billing-cycle timing, not only cancellations.</div>
+  </section>
+
+  <!-- REVENUE TREND -->
+  <div class="eyebrow"><span class="tag">Context</span> Revenue Over Time</div>
+  <section class="panel">
+    <div class="ptitle"><h3>Monthly revenue by stream</h3><span class="sub">Merch + membership · full history</span></div>
+    <div class="callout neutral">Merch is <b style="color:var(--bone)">event-driven</b>. The big spikes are tentpole months. Current-month softness is likely seasonal, not a decline.</div>
+    <div class="chart-host" style="height:300px"><canvas id="revChart"></canvas></div>
+  </section>
+
+  <!-- OPERATIONS -->
+  <div class="eyebrow"><span class="tag">Operations</span> What's Selling</div>
+  <div class="grid-ops">
+    <section class="panel">
+      <div class="ptitle"><h3>Top products</h3><span class="hint">Click any product</span></div>
+      <div class="prod-list" id="prodList"></div>
+      <div class="note">All-time · customer orders${document.getElementById('exInternal').checked?' only':' (includes internal)'}</div>
+    </section>
+    <section class="panel">
+      <div class="ptitle"><h3>Category mix</h3><span class="hint">Click a slice</span></div>
+      <div class="chart-host" style="height:260px;margin-top:8px"><canvas id="catChart"></canvas></div>
+    </section>
+  </div>
+
+  <footer>Data source: Shopify online sales only. Square in-person and TIXR ticketing not included — figures will not match QuickBooks totals.</footer>
+  `;
+
+  // Month buttons
+  const moBtns=document.getElementById('moBtns');
+  summaryMonths.filter(m=>m.ts.getFullYear()>=2026).forEach(m=>{
+    const btn=document.createElement('button');
+    btn.className='mo-btn';
+    btn.textContent=fmtMonth(m.ts);
+    btn.onclick=()=>openMonthDrawer(m.ts);
+    moBtns.appendChild(btn);
+  });
+
+  // Charts
+  Chart.defaults.color=BONEDIM;
+  Chart.defaults.font.family="Inter, Helvetica Neue, Arial, sans-serif";
+  Chart.defaults.font.size=11;
+  const gridX={grid:{display:false},border:{color:LINE}};
+  const gridY={grid:{color:"rgba(255,255,255,.04)"},border:{display:false}};
+  const memLabels=summaryMonths.filter(m=>m.ts.getFullYear()>=2026).map(m=>fmtMonth(m.ts));
+  const activeVals=summaryMonths.filter(m=>m.ts.getFullYear()>=2026).map(m=>m.active);
+  const newVals=summaryMonths.filter(m=>m.ts.getFullYear()>=2026).map(m=>m.newM);
+  const mrrVals=summaryMonths.filter(m=>m.ts.getFullYear()>=2026).map(m=>m.mrr);
+
+  new Chart(document.getElementById('memChart'),{
+    data:{labels:memLabels,datasets:[
+      {type:'bar',label:'New signups',data:newVals,backgroundColor:"rgba(200,16,46,.32)",borderColor:RED,borderWidth:1,borderRadius:3,order:2,barThickness:26},
+      {type:'line',label:'Active members',data:activeVals,borderColor:REDSOFT,backgroundColor:REDSOFT,borderWidth:2.5,tension:.3,pointRadius:4,pointBackgroundColor:REDSOFT,order:1}
+    ]},
+    options:{maintainAspectRatio:false,responsive:true,
+      plugins:{legend:{labels:{boxWidth:10,usePointStyle:true},position:'top',align:'end'}},
+      scales:{x:gridX,y:{...gridY,beginAtZero:true,ticks:{precision:0}}}}
+  });
+
+  new Chart(document.getElementById('mrrChart'),{
+    type:'line',
+    data:{labels:memLabels,datasets:[{label:'MRR',data:mrrVals,borderColor:BONE,backgroundColor:"rgba(245,240,232,.06)",fill:true,borderWidth:2,tension:.3,pointRadius:3,pointBackgroundColor:BONE}]},
+    options:{maintainAspectRatio:false,responsive:true,
+      plugins:{legend:{display:false},title:{display:true,text:'Monthly Recurring Revenue',align:'start',color:BONEDIM,font:{size:11,weight:'600'}}},
+      scales:{x:gridX,y:{...gridY,ticks:{callback:v=>'$'+(v/1000).toFixed(1)+'k'}}}}
+  });
+
+  const revLabels=summaryMonths.map(m=>fmtMonth(m.ts));
+  new Chart(document.getElementById('revChart'),{
+    type:'bar',
+    data:{labels:revLabels,datasets:[
+      {label:'Merch',data:summaryMonths.map(m=>m.merch),backgroundColor:"rgba(245,240,232,.55)",stack:'s',borderRadius:2},
+      {label:'Membership',data:summaryMonths.map(m=>m.mem),backgroundColor:RED,stack:'s',borderRadius:2}
+    ]},
+    options:{maintainAspectRatio:false,responsive:true,
+      plugins:{legend:{labels:{boxWidth:10},position:'top',align:'end'}},
+      scales:{x:{...gridX,ticks:{maxRotation:0,autoSkip:true,font:{size:9.5}}},y:{...gridY,ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k'}}}}
+  });
+
+  const catColors=[RED,REDSOFT,"#7E1220","#E8836F","#C9A24B","#5FB87A","#5B6BB0","#6E727A"];
+  const catChart=new Chart(document.getElementById('catChart'),{
+    type:'doughnut',
+    data:{labels:catEntries.map(c=>c[0]),datasets:[{data:catEntries.map(c=>c[1]),backgroundColor:catColors.slice(0,catEntries.length),borderColor:"#16181C",borderWidth:2}]},
+    options:{maintainAspectRatio:false,responsive:true,cutout:'62%',
+      onClick:(e,el)=>{if(el.length)openCategoryDrawer(catEntries[el[0].index][0]);},
+      onHover:(e,el)=>{e.native.target.style.cursor=el.length?'pointer':'default';},
+      plugins:{legend:{position:'right',labels:{boxWidth:10,padding:9,font:{size:11}}}}}
+  });
+
+  // Top products list
+  const prodList=document.getElementById('prodList');
+  topProds.forEach(([name,rev])=>{
+    const pct=Math.round(rev/maxProd*100);
+    const div=document.createElement('div');
+    div.className='prow';
+    div.innerHTML=`<span class="nm">${name}</span><span class="amt">${fmtCurrency(rev)}</span><span class="bar"><i style="width:${pct}%"></i></span>`;
+    div.onclick=()=>openProductDrawer(name);
+    prodList.appendChild(div);
+  });
+
+  // Store refs for drawers
+  window._state={cm,pm,cmOrders,pmOrders,merchCm,memCm,merchRev,mrr,totalRev,activeMem,newMem,ytdMerch,ytdMem,ytdTotal,ytdMerchOrders,summaryMonths,adultCount,juniorCount,seniorCount,adultMrr,juniorMrr,seniorMrr};
+}
+
+// ── DRAWER ENGINE ────────────────────────────────────────────────────────────
+function openDrawer(eye,title,chips,cols,rows){
+  document.getElementById('dEye').textContent=eye;
+  document.getElementById('dTitle').textContent=title;
+  document.getElementById('dChips').innerHTML=chips.map(c=>`<div class="dchip"><div class="cl">${c.l}</div><div class="cv">${c.v}</div></div>`).join('');
+  if(!rows||!rows.length){
+    document.getElementById('dTable').innerHTML=`<div class="empty">No records in this slice.</div>`;
+  } else {
+    document.getElementById('dTable').innerHTML=
+      `<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>`+
+      `<tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  }
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('backdrop').classList.add('open');
+}
+
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('backdrop').classList.remove('open');
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+
+function fmtDate(str){const d=parseDate(str);return d?d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';}
+
+// ── DRAWER OPENERS ───────────────────────────────────────────────────────────
+function openCardDrawer(key){
+  const s=window._state;
+  const cm=s.cm, pm=s.pm;
+  const label=fmtMonth(cm);
+  if(key==='totalRev'){
+    const rows=s.cmOrders.map(r=>[r['Order Name'],fmtDate(r['Created At']),r['Email'],r['Product Category'],fmtCurrency(r['Adjusted Revenue'])]);
+    openDrawer(`${label} · All Revenue`,'Total Revenue',[{l:'Total',v:fmtCurrency(s.totalRev)},{l:'Merch',v:fmtCurrency(s.merchRev)},{l:'Membership',v:fmtCurrency(s.mrr)}],['Order','Date','Customer','Type','Revenue'],rows);
+  } else if(key==='mrr'){
+    const rows=s.memCm.map(r=>[r['Email'],r['Membership Tier'],r['Subscription Event'],fmtCurrency(r['Adjusted Revenue'])]);
+    openDrawer(`${label} · Membership`,'MRR',[{l:'MRR',v:fmtCurrency(s.mrr)},{l:'Members',v:String(s.activeMem)}],['Member','Tier','Status','Charge'],rows);
+  } else if(key==='active'){
+    const rows=s.memCm.map(r=>[r['Email'],r['Membership Tier'],r['Subscription Event'],fmtDate(r['Created At'])]);
+    openDrawer(`${label} · Active`,'Active Members',[{l:'Active',v:String(s.activeMem)},{l:'MRR',v:fmtCurrency(s.mrr)}],['Member','Tier','Status','Last Charge'],rows);
+  } else if(key==='new'){
+    const newRows=s.memCm.filter(r=>r['Subscription Event']==='First Order').map(r=>[r['Email'],r['Membership Tier'],fmtDate(r['Created At'])]);
+    openDrawer(`${label} · New Signups`,'New Members',[{l:'New',v:String(s.newMem)},{l:'Month',v:label}],['Member','Tier','Date'],newRows);
+  }
+}
+
+function openYtdDrawer(key){
+  const s=window._state;
+  const ytdStart=new Date(s.cm.getFullYear(),0,1);
+  const ytdSum=SUMMARY.filter(r=>{const d=parseDate(r['Month Start']);return d&&d>=ytdStart&&d<=s.cm;});
+  if(key==='total'){
+    const rows=ytdSum.map(r=>{
+      const m=parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0;
+      const mem=parseFloat(String(r['Membership Revenue']).replace(/[$,]/g,''))||0;
+      return [fmtMonth(parseDate(r['Month Start'])),fmtCurrency(m),fmtCurrency(mem),fmtCurrency(m+mem)];
+    });
+    openDrawer('2026 YTD · All Streams','Total Revenue',[{l:'Total',v:fmtCurrency(s.ytdTotal)}],['Month','Merch','Membership','Total'],rows);
+  } else if(key==='merch'){
+    const rows=ytdSum.map(r=>[fmtMonth(parseDate(r['Month Start'])),fmtCurrency(parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0),r['Merch Orders']||'—',r['Merch Units']||'—']);
+    openDrawer('2026 YTD · Merchandise','Merch Revenue',[{l:'Merch',v:fmtCurrency(s.ytdMerch)},{l:'Orders',v:String(s.ytdMerchOrders)}],['Month','Revenue','Orders','Units'],rows);
+  } else if(key==='membership'){
+    const rows=ytdSum.map(r=>[fmtMonth(parseDate(r['Month Start'])),fmtCurrency(parseFloat(String(r['Membership Revenue']).replace(/[$,]/g,''))||0),r['Active Members']||'0',r['New Members']||'0']);
+    openDrawer('2026 YTD · TRAP','Membership Revenue',[{l:'Total',v:fmtCurrency(s.ytdMem)},{l:'Active now',v:String(s.activeMem)}],['Month','MRR','Active','New'],rows);
+  } else if(key==='active'){
+    const rows=s.memCm.map(r=>[r['Email'],r['Membership Tier'],r['Subscription Event'],fmtDate(r['Created At'])]);
+    openDrawer('Current · Active Members','Active Members',[{l:'Active',v:String(s.activeMem)},{l:'Adult',v:String(s.adultCount)},{l:'Junior',v:String(s.juniorCount)}],['Member','Tier','Status','Last Charge'],rows);
+  } else if(key==='orders'){
+    const rows=ytdSum.map(r=>{
+      const rev=parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0;
+      const ords=parseInt(r['Merch Orders'])||0;
+      return [fmtMonth(parseDate(r['Month Start'])),String(ords),fmtCurrency(rev),ords?fmtCurrency(rev/ords):'—'];
+    });
+    openDrawer('2026 YTD · Orders','Merch Orders',[{l:'Orders',v:String(s.ytdMerchOrders)},{l:'Revenue',v:fmtCurrency(s.ytdMerch)}],['Month','Orders','Revenue','AOV'],rows);
+  }
+}
+
+function openTierDrawer(tier){
+  const s=window._state;
+  const rows=s.memCm.filter(r=>r['Membership Tier']===tier).map(r=>[r['Email'],r['Subscription Event'],fmtDate(r['Created At'])]);
+  const count=rows.length, price=tier==='Junior'?160:150;
+  openDrawer(`Membership · Tier`,`TRAP ${tier}`,[{l:'Members',v:String(count)},{l:'MRR',v:fmtCurrency(count*price)},{l:'Price',v:`$${price}`}],['Member','Status','Last Charge'],rows);
+}
+
+function openMonthDrawer(ts){
+  const rows=ORDERS.filter(r=>{
+    const d=monthStart(r['Created At']);
+    return d&&d.getTime()===ts.getTime()&&r['Product Category']==='Membership';
+  }).map(r=>[r['Email'],r['Membership Tier'],r['Subscription Event'],fmtDate(r['Created At'])]);
+  const label=fmtMonth(ts);
+  const active=new Set(rows.map(r=>r[0])).size;
+  const newM=rows.filter(r=>r[2]==='First Order').length;
+  const mrrVal=rows.reduce((a,r)=>{
+    const price=r[1]==='Junior'?160:150;
+    return a+price;
+  },0);
+  openDrawer(`Membership · Month`,label,[{l:'Active',v:String(active)},{l:'New',v:String(newM)},{l:'MRR',v:fmtCurrency(mrrVal)}],['Member','Tier','Status','Date'],rows);
+}
+
+function openProductDrawer(name){
+  const rows=ORDERS.filter(r=>r['Line Item Title']===name&&r['Product Category']==='Merchandise')
+    .map(r=>[r['Order Name'],fmtDate(r['Created At']),r['Email'],r['Variant Title'],r['Quantity'],fmtCurrency(r['Adjusted Revenue'])]);
+  const totalRev=rows.reduce((a,r)=>a+(parseFloat(String(r[5]).replace(/[$,]/g,''))||0),0);
+  openDrawer('Product',name,[{l:'Revenue',v:fmtCurrency(totalRev)},{l:'Orders',v:String(rows.length)}],['Order','Date','Customer','Variant','Qty','Revenue'],rows);
+}
+
+function openCategoryDrawer(cat){
+  const catRows=ORDERS.filter(r=>r['Merch Bucket']===cat&&r['Product Category']==='Merchandise');
+  const prodMap={};
+  catRows.forEach(r=>{const n=r['Line Item Title'],v=parseFloat(String(r['Adjusted Revenue']).replace(/[$,]/g,''))||0,q=parseInt(r['Quantity'])||0;if(n){if(!prodMap[n])prodMap[n]={rev:0,units:0};prodMap[n].rev+=v;prodMap[n].units+=q;}});
+  const rows=Object.entries(prodMap).sort((a,b)=>b[1].rev-a[1].rev).map(([n,v])=>[n,fmtCurrency(v.rev),String(v.units)]);
+  const catRev=catRows.reduce((a,r)=>a+(parseFloat(String(r['Adjusted Revenue']).replace(/[$,]/g,''))||0),0);
+  openDrawer('Category',cat,[{l:'Revenue',v:fmtCurrency(catRev)},{l:'Products',v:String(rows.length)}],['Product','Revenue','Units'],rows);
+}
+</script>
+</body>
+</html>
