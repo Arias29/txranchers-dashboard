@@ -196,10 +196,10 @@ async function fetchSheet(range){
 
 function parseRows(values){
   if(!values.length) return {headers:[],rows:[]};
-  const headers=values[0];
+  const headers=values[0].map(h=>(h||'').trim());
   const rows=values.slice(1).map(r=>{
     const obj={};
-    headers.forEach((h,i)=>obj[h]=r[i]||'');
+    headers.forEach((h,i)=>obj[h]=(r[i]||'').trim());
     return obj;
   });
   return {headers,rows};
@@ -249,7 +249,7 @@ async function loadData(){
   try{
     const [sumVals,ordVals]=await Promise.all([
       fetchSheet('Monthly Summary!A:P'),
-      fetchSheet('Orders!A:BF')
+      fetchSheet('Orders!A:BJ')
     ]);
     const sum=parseRows(sumVals);
     const ord=parseRows(ordVals);
@@ -258,10 +258,11 @@ async function loadData(){
     summaryHeaders=sum.headers;
     ordersHeaders=ord.headers;
 
-    // Determine latest complete month
+    // Determine latest month with order data, fall back to prior calendar month
     const now=new Date();
-    const latest=new Date(now.getFullYear(),now.getMonth()-1,1);
-    const prior=new Date(now.getFullYear(),now.getMonth()-2,1);
+    const latestOrderMonth=ORDERS.map(r=>monthStart(r['Created At'])).filter(Boolean).sort((a,b)=>b-a)[0];
+    const latest=latestOrderMonth||new Date(now.getFullYear(),now.getMonth()-1,1);
+    const prior=new Date(latest.getFullYear(),latest.getMonth()-1,1);
     currentMonth=latest;
     priorMonth=prior;
 
