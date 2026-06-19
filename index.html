@@ -534,11 +534,12 @@ function renderDashboard(){
     options:{maintainAspectRatio:false,responsive:true,cutout:'62%',
       onClick:(e,el)=>{if(el.length)openCategoryDrawer(catEntries[el[0].index][0]);},
       onHover:(e,el)=>{e.native.target.style.cursor=el.length?'pointer':'default';},
-      plugins:{legend:{position:'right',labels:{boxWidth:10,padding:10,font:{size:11},
+      plugins:{legend:{position:'right',labels:{boxWidth:10,padding:10,font:{size:11},color:BONEDIM,
         generateLabels:()=>catEntries.map((c,i)=>({
           text:`${c[0]}   ${fmtCurrency(c[1])}  (${Math.round(c[1]/catTotal*100)}%)`,
           fillStyle:catColors[i%catColors.length],
-          strokeStyle:'#16181C',lineWidth:2,hidden:false,index:i
+          fontColor:BONEDIM,
+          strokeStyle:'#141820',lineWidth:2,hidden:false,index:i
         }))
       }}}}
   });
