@@ -39,7 +39,7 @@
   .delta .mo{color:var(--ink-dim);font-weight:500}
   .ytd{display:flex;align-items:stretch;flex-wrap:wrap;margin-top:14px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:13px 6px}
   .ytd-tag{font-size:10px;letter-spacing:.18em;text-transform:uppercase;font-weight:800;color:var(--red);padding:0 18px;border-right:1px solid var(--line);display:flex;align-items:center;line-height:1.2}
-  .ytd-item{display:flex;flex-direction:column;justify-content:center;padding:2px 20px;border-right:1px solid var(--line);cursor:pointer}
+  .ytd-item{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;flex:1;padding:2px 12px;border-right:1px solid var(--line);cursor:pointer}
   .ytd-item:last-child{border-right:none}
   .ytd-item:hover .yv{color:var(--red-soft)}
   .yl{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--bone-dim);font-weight:600}
@@ -263,8 +263,7 @@ async function loadData(){
     MONTHS=SUMMARY
       .filter(r=>r['Month Start']&&r['Month Label'])
       .map(r=>({ts:parseDate(r['Month Start']),label:r['Month Label']}))
-      .filter(r=>r.ts&&r.ts.getUTCFullYear()>=2025&&
-        (r.ts.getUTCFullYear()<now.getUTCFullYear()||(r.ts.getUTCFullYear()===now.getUTCFullYear()&&r.ts.getUTCMonth()<=now.getUTCMonth())))
+      .filter(r=>r.ts&&r.ts.getUTCFullYear()===2026&&r.ts.getUTCMonth()<=now.getUTCMonth())
       .sort((a,b)=>b.ts-a.ts);
 
     // Lock to last full calendar month by default
