@@ -580,6 +580,7 @@ function fmtDate(str){const d=parseDate(str);return d?d.toLocaleDateString('en-U
 
 // ── DRAWER OPENERS ───────────────────────────────────────────────────────────
 function byDateDesc(a,b){return (parseDate(b['Created At'])||0)-(parseDate(a['Created At'])||0);}
+function memName(r){return r['Customer Name']||r['Email'];}
 
 function openCardDrawer(key){
   const s=window._state;
@@ -589,13 +590,13 @@ function openCardDrawer(key){
     const rows=s.cmOrders.slice().sort(byDateDesc).map(r=>[r['Order Name'],fmtDate(r['Created At']),r['Email'],r['Product Category'],fmtCurrency(r['Adjusted Revenue'])]);
     openDrawer(`${label} · All Revenue`,'Total Revenue',[{l:'Total',v:fmtCurrency(s.totalRev)},{l:'Merch',v:fmtCurrency(s.merchRev)},{l:'Membership',v:fmtCurrency(s.mrr)}],['Order','Date','Customer','Type','Revenue'],rows);
   } else if(key==='mrr'){
-    const rows=s.memCm.slice().sort(byDateDesc).map(r=>[r['Email'],r['Membership Tier'],r['Subscription Event'],fmtCurrency(r['Adjusted Revenue'])]);
+    const rows=s.memCm.slice().sort(byDateDesc).map(r=>[memName(r),r['Membership Tier'],r['Subscription Event'],fmtCurrency(r['Adjusted Revenue'])]);
     openDrawer(`${label} · Membership`,'MRR',[{l:'MRR',v:fmtCurrency(s.mrr)},{l:'Members',v:String(s.activeMem)}],['Member','Tier','Status','Charge'],rows);
   } else if(key==='active'){
-    const rows=s.memCm.slice().sort(byDateDesc).map(r=>[r['Email'],r['Membership Tier'],r['Subscription Event'],fmtDate(r['Created At'])]);
+    const rows=s.memCm.slice().sort(byDateDesc).map(r=>[memName(r),r['Membership Tier'],r['Subscription Event'],fmtDate(r['Created At'])]);
     openDrawer(`${label} · Active`,'Active Members',[{l:'Active',v:String(s.activeMem)},{l:'MRR',v:fmtCurrency(s.mrr)}],['Member','Tier','Status','Last Charge'],rows);
   } else if(key==='new'){
-    const newRows=s.memCm.filter(r=>r['Subscription Event']==='First Order').sort(byDateDesc).map(r=>[r['Email'],r['Membership Tier'],fmtDate(r['Created At'])]);
+    const newRows=s.memCm.filter(r=>r['Subscription Event']==='First Order').sort(byDateDesc).map(r=>[memName(r),r['Membership Tier'],fmtDate(r['Created At'])]);
     openDrawer(`${label} · New Signups`,'New Members',[{l:'New',v:String(s.newMem)},{l:'Month',v:label}],['Member','Tier','Date'],newRows);
   }
 }
@@ -623,7 +624,7 @@ function openYtdDrawer(key){
     const rows=ytdSum.map(r=>[moLabel(r),fmtCurrency(parseFloat(String(r['Membership Revenue']).replace(/[$,]/g,''))||0),r['Active Members']||'0',r['New Members']||'0']);
     openDrawer('2026 YTD · TRAP','Membership Revenue',[{l:'Total',v:fmtCurrency(s.ytdMem)},{l:'Active now',v:String(s.activeMem)}],['Month','MRR','Active','New'],rows);
   } else if(key==='active'){
-    const rows=s.memCm.map(r=>[r['Email'],r['Membership Tier'],r['Subscription Event'],fmtDate(r['Created At'])]);
+    const rows=s.memCm.map(r=>[memName(r),r['Membership Tier'],r['Subscription Event'],fmtDate(r['Created At'])]);
     openDrawer('Current · Active Members','Active Members',[{l:'Active',v:String(s.activeMem)},{l:'Adult',v:String(s.adultCount)},{l:'Junior',v:String(s.juniorCount)}],['Member','Tier','Status','Last Charge'],rows);
   } else if(key==='orders'){
     const rows=ytdSum.map(r=>{
@@ -637,21 +638,22 @@ function openYtdDrawer(key){
 
 function openTierDrawer(tier){
   const s=window._state;
-  const rows=s.memCm.filter(r=>r['Membership Tier']===tier).sort(byDateDesc).map(r=>[r['Email'],r['Subscription Event'],fmtDate(r['Created At'])]);
+  const rows=s.memCm.filter(r=>r['Membership Tier']===tier).sort(byDateDesc).map(r=>[memName(r),r['Subscription Event'],fmtDate(r['Created At'])]);
   const count=rows.length, price=tier==='Junior'?160:150;
   openDrawer(`Membership · Tier`,`TRAP ${tier}`,[{l:'Members',v:String(count)},{l:'MRR',v:fmtCurrency(count*price)},{l:'Price',v:`$${price}`}],['Member','Status','Last Charge'],rows);
 }
 
 function openMonthDrawer(ts){
-  const rows=ORDERS.filter(r=>{
+  const filtered=ORDERS.filter(r=>{
     const d=monthStart(r['Created At']);
     return d&&d.getTime()===ts.getTime()&&r['Product Category']==='Membership';
-  }).sort(byDateDesc).map(r=>[r['Email'],r['Membership Tier'],r['Subscription Event'],fmtDate(r['Created At'])]);
+  }).sort(byDateDesc);
+  const rows=filtered.map(r=>[memName(r),r['Membership Tier'],r['Subscription Event'],fmtDate(r['Created At'])]);
   const label=fmtMonth(ts);
-  const active=new Set(rows.map(r=>r[0])).size;
-  const newM=rows.filter(r=>r[2]==='First Order').length;
-  const mrrVal=rows.reduce((a,r)=>{
-    const price=r[1]==='Junior'?160:150;
+  const active=new Set(filtered.map(r=>r['Email'].toLowerCase())).size;
+  const newM=filtered.filter(r=>r['Subscription Event']==='First Order').length;
+  const mrrVal=filtered.reduce((a,r)=>{
+    const price=r['Membership Tier']==='Junior'?160:150;
     return a+price;
   },0);
   openDrawer(`Membership · Month`,label,[{l:'Active',v:String(active)},{l:'New',v:String(newM)},{l:'MRR',v:fmtCurrency(mrrVal)}],['Member','Tier','Status','Date'],rows);
