@@ -29,6 +29,7 @@
   .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
   .eyebrow .tag{color:var(--red)}
   .hero{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
+  .hero-ytd{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:22px}
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;cursor:pointer;transition:border-color .15s}
   .stat:hover{border-color:var(--red)}
   .stat .k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-dim);font-weight:600}
@@ -112,7 +113,7 @@
   td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.04);font-variant-numeric:tabular-nums}
   tr:hover td{background:rgba(255,255,255,.02)}
   .empty{color:var(--ink-dim);font-size:13px;padding:24px 4px;text-align:center}
-  @media(max-width:900px){.hero{grid-template-columns:repeat(2,1fr)}.grid-2,.grid-ops,.tier-row{grid-template-columns:1fr}}
+  @media(max-width:900px){.hero,.hero-ytd{grid-template-columns:repeat(2,1fr)}.grid-2,.grid-ops,.tier-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -314,11 +315,13 @@ function renderDashboard(){
   const newMem=memCm.filter(r=>r['Subscription Event']==='First Order').length;
   const newMemP=pm?memPm.filter(r=>r['Subscription Event']==='First Order').length:0;
 
-  // YTD
+  // YTD — include current (in-progress) month
   const ytdStart=new Date(cm.getFullYear(),0,1);
+  const ytdNow=new Date();
+  const ytdEnd=new Date(ytdNow.getFullYear(),ytdNow.getMonth(),1);
   const ytdOrders=fOrders.filter(r=>{
     const d=monthStart(r['Created At']);
-    return d && d>=ytdStart && d<=cm;
+    return d && d>=ytdStart && d<=ytdEnd;
   });
   const ytdMerch=sumField(ytdOrders.filter(r=>r['Product Category']==='Merchandise'),'Adjusted Revenue');
   const ytdMem  =sumField(ytdOrders.filter(r=>r['Product Category']==='Membership'),'Adjusted Revenue');
@@ -378,34 +381,44 @@ function renderDashboard(){
     <div class="stamp">Live data · refreshed on load</div>
   </div>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="stat" onclick="openCardDrawer('totalRev')">
-      <div class="k">Total Revenue</div><div class="v">${fmtCurrency(totalRev)}</div>
-      <div class="delta ${d1.cls}">${d1.html}</div>
+  <!-- YTD (big, primary) -->
+  <section class="hero-ytd">
+    <div class="stat" onclick="openYtdDrawer('total')">
+      <div class="k">YTD Total Revenue</div><div class="v">${fmtCurrency(ytdTotal)}</div>
     </div>
-    <div class="stat" onclick="openCardDrawer('mrr')">
-      <div class="k">MRR</div><div class="v">${fmtCurrency(mrr)}</div>
-      <div class="delta ${d2.cls}">${d2.html}</div>
+    <div class="stat" onclick="openYtdDrawer('merch')">
+      <div class="k">YTD Merch</div><div class="v">${fmtCurrency(ytdMerch)}</div>
     </div>
-    <div class="stat" onclick="openCardDrawer('active')">
+    <div class="stat" onclick="openYtdDrawer('membership')">
+      <div class="k">YTD Membership</div><div class="v">${fmtCurrency(ytdMem)}</div>
+    </div>
+    <div class="stat" onclick="openYtdDrawer('active')">
       <div class="k">Active Members</div><div class="v">${activeMem}</div>
-      <div class="delta ${d3.cls}">${d3.html}</div>
     </div>
-    <div class="stat" onclick="openCardDrawer('new')">
-      <div class="k">New Members</div><div class="v">${newMem}</div>
-      <div class="delta ${d4.cls}">${d4.html}</div>
+    <div class="stat" onclick="openYtdDrawer('orders')">
+      <div class="k">YTD Merch Orders</div><div class="v">${ytdMerchOrders}</div>
     </div>
   </section>
 
-  <!-- YTD BAND -->
-  <section class="ytd">
-    <div class="ytd-tag">2026<br>YTD</div>
-    <div class="ytd-item" onclick="openYtdDrawer('total')"><span class="yl">Total Revenue</span><span class="yv">${fmtCurrency(ytdTotal)}</span></div>
-    <div class="ytd-item" onclick="openYtdDrawer('merch')"><span class="yl">Merch</span><span class="yv">${fmtCurrency(ytdMerch)}</span></div>
-    <div class="ytd-item" onclick="openYtdDrawer('membership')"><span class="yl">Membership</span><span class="yv">${fmtCurrency(ytdMem)}</span></div>
-    <div class="ytd-item" onclick="openYtdDrawer('active')"><span class="yl">Active Members · now</span><span class="yv">${activeMem}</span></div>
-    <div class="ytd-item" onclick="openYtdDrawer('orders')"><span class="yl">Merch Orders</span><span class="yv">${ytdMerchOrders}</span></div>
+  <!-- MONTHLY COMPARISON STRIP -->
+  <section class="ytd" style="margin-top:14px">
+    <div class="ytd-tag">${fmtMonth(cm).split(' ')[0]}<br>${fmtMonth(cm).split(' ')[1]}</div>
+    <div class="ytd-item" onclick="openCardDrawer('totalRev')">
+      <span class="yl">Total Revenue</span><span class="yv">${fmtCurrency(totalRev)}</span>
+      <div class="delta ${d1.cls}" style="font-size:10.5px;margin-top:3px">${d1.html}</div>
+    </div>
+    <div class="ytd-item" onclick="openCardDrawer('mrr')">
+      <span class="yl">MRR</span><span class="yv">${fmtCurrency(mrr)}</span>
+      <div class="delta ${d2.cls}" style="font-size:10.5px;margin-top:3px">${d2.html}</div>
+    </div>
+    <div class="ytd-item" onclick="openCardDrawer('active')">
+      <span class="yl">Active Members</span><span class="yv">${activeMem}</span>
+      <div class="delta ${d3.cls}" style="font-size:10.5px;margin-top:3px">${d3.html}</div>
+    </div>
+    <div class="ytd-item" onclick="openCardDrawer('new')">
+      <span class="yl">New Members</span><span class="yv">${newMem}</span>
+      <div class="delta ${d4.cls}" style="font-size:10.5px;margin-top:3px">${d4.html}</div>
+    </div>
   </section>
 
   <!-- MEMBERSHIP HEALTH -->
