@@ -608,18 +608,19 @@ function openYtdDrawer(key){
     const d=parseDate(r['Month Start']);
     return d&&d.getUTCFullYear()===yr&&d.getUTCMonth()<=nowUTCMonth;
   }).sort((a,b)=>parseDate(b['Month Start'])-parseDate(a['Month Start']));
+  const moLabel=r=>r['Month Label']||fmtMonth(parseDate(r['Month Start']));
   if(key==='total'){
     const rows=ytdSum.map(r=>{
       const m=parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0;
       const mem=parseFloat(String(r['Membership Revenue']).replace(/[$,]/g,''))||0;
-      return [fmtMonth(parseDate(r['Month Start'])),fmtCurrency(m),fmtCurrency(mem),fmtCurrency(m+mem)];
+      return [moLabel(r),fmtCurrency(m),fmtCurrency(mem),fmtCurrency(m+mem)];
     });
     openDrawer('2026 YTD · All Streams','Total Revenue',[{l:'Total',v:fmtCurrency(s.ytdTotal)}],['Month','Merch','Membership','Total'],rows);
   } else if(key==='merch'){
-    const rows=ytdSum.map(r=>[fmtMonth(parseDate(r['Month Start'])),fmtCurrency(parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0),r['Merch Orders']||'—',r['Merch Units']||'—']);
+    const rows=ytdSum.map(r=>[moLabel(r),fmtCurrency(parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0),r['Merch Orders']||'—',r['Merch Units']||'—']);
     openDrawer('2026 YTD · Merchandise','Merch Revenue',[{l:'Merch',v:fmtCurrency(s.ytdMerch)},{l:'Orders',v:String(s.ytdMerchOrders)}],['Month','Revenue','Orders','Units'],rows);
   } else if(key==='membership'){
-    const rows=ytdSum.map(r=>[fmtMonth(parseDate(r['Month Start'])),fmtCurrency(parseFloat(String(r['Membership Revenue']).replace(/[$,]/g,''))||0),r['Active Members']||'0',r['New Members']||'0']);
+    const rows=ytdSum.map(r=>[moLabel(r),fmtCurrency(parseFloat(String(r['Membership Revenue']).replace(/[$,]/g,''))||0),r['Active Members']||'0',r['New Members']||'0']);
     openDrawer('2026 YTD · TRAP','Membership Revenue',[{l:'Total',v:fmtCurrency(s.ytdMem)},{l:'Active now',v:String(s.activeMem)}],['Month','MRR','Active','New'],rows);
   } else if(key==='active'){
     const rows=s.memCm.map(r=>[r['Email'],r['Membership Tier'],r['Subscription Event'],fmtDate(r['Created At'])]);
@@ -628,7 +629,7 @@ function openYtdDrawer(key){
     const rows=ytdSum.map(r=>{
       const rev=parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0;
       const ords=parseInt(r['Merch Orders'])||0;
-      return [fmtMonth(parseDate(r['Month Start'])),String(ords),fmtCurrency(rev),ords?fmtCurrency(rev/ords):'—'];
+      return [moLabel(r),String(ords),fmtCurrency(rev),ords?fmtCurrency(rev/ords):'—'];
     });
     openDrawer('2026 YTD · Orders','Merch Orders',[{l:'Orders',v:String(s.ytdMerchOrders)},{l:'Revenue',v:fmtCurrency(s.ytdMerch)}],['Month','Orders','Revenue','AOV'],rows);
   }
