@@ -601,7 +601,9 @@ function openCardDrawer(key){
 function openYtdDrawer(key){
   const s=window._state;
   const ytdStart=new Date(s.cm.getFullYear(),0,1);
-  const ytdSum=SUMMARY.filter(r=>{const d=parseDate(r['Month Start']);return d&&d>=ytdStart&&d<=s.cm;});
+  const now=new Date();
+  const ytdEnd=new Date(now.getFullYear(),now.getMonth(),1);
+  const ytdSum=SUMMARY.filter(r=>{const d=parseDate(r['Month Start']);return d&&d>=ytdStart&&d<=ytdEnd;});
   if(key==='total'){
     const rows=ytdSum.map(r=>{
       const m=parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0;
@@ -651,14 +653,16 @@ function openMonthDrawer(ts){
 }
 
 function openProductDrawer(name){
-  const rows=ORDERS.filter(r=>r['Line Item Title']===name&&r['Product Category']==='Merchandise')
+  const yr=window._state.cm.getFullYear();
+  const rows=ORDERS.filter(r=>r['Line Item Title']===name&&r['Product Category']==='Merchandise'&&(parseDate(r['Created At'])||new Date(0)).getFullYear()===yr)
     .map(r=>[r['Order Name'],fmtDate(r['Created At']),r['Email'],r['Variant Title'],r['Quantity'],fmtCurrency(r['Adjusted Revenue'])]);
   const totalRev=rows.reduce((a,r)=>a+(parseFloat(String(r[5]).replace(/[$,]/g,''))||0),0);
   openDrawer('Product',name,[{l:'Revenue',v:fmtCurrency(totalRev)},{l:'Orders',v:String(rows.length)}],['Order','Date','Customer','Variant','Qty','Revenue'],rows);
 }
 
 function openCategoryDrawer(cat){
-  const catRows=ORDERS.filter(r=>r['Merch Bucket']===cat&&r['Product Category']==='Merchandise');
+  const yr=window._state.cm.getFullYear();
+  const catRows=ORDERS.filter(r=>r['Merch Bucket']===cat&&r['Product Category']==='Merchandise'&&(parseDate(r['Created At'])||new Date(0)).getFullYear()===yr);
   const prodMap={};
   catRows.forEach(r=>{const n=r['Line Item Title'],v=parseFloat(String(r['Adjusted Revenue']).replace(/[$,]/g,''))||0,q=parseInt(r['Quantity'])||0;if(n){if(!prodMap[n])prodMap[n]={rev:0,units:0};prodMap[n].rev+=v;prodMap[n].units+=q;}});
   const rows=Object.entries(prodMap).sort((a,b)=>b[1].rev-a[1].rev).map(([n,v])=>[n,fmtCurrency(v.rev),String(v.units)]);
