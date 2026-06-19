@@ -134,7 +134,7 @@
 <div id="app" style="display:none">
   <header>
     <div class="wrap hbar">
-      <div class="mark">Texas Ranchers<span>Revenue &amp; Membership</span></div>
+      <div class="mark">Texas Ranchers<span>Membership &amp; Merchandise</span></div>
       <div class="controls">
         <label class="toggle"><input type="checkbox" id="exInternal"> Exclude internal</label>
         <a class="glink" href="https://docs.google.com/spreadsheets/d/1_2yQg56wqCuBA4WOyj4JrWyOLQeQR-3IO1Ju7V96y_g" target="_blank">View in Sheets ↗</a>
@@ -377,7 +377,7 @@ function renderDashboard(){
 
   document.getElementById('mainContent').innerHTML=`
   <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:26px;flex-wrap:wrap;gap:10px">
-    <div style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--bone-dim);font-weight:700">State of the Business</div>
+    <div style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--bone-dim);font-weight:700">2026 Year to Date</div>
     <div class="stamp">Live data · refreshed on load</div>
   </div>
 
@@ -425,7 +425,7 @@ function renderDashboard(){
   </section>
 
   <!-- MEMBERSHIP HEALTH -->
-  <div class="eyebrow"><span class="tag">Priority</span> Membership Health</div>
+  <div class="eyebrow"><span class="tag">Membership Overview</span></div>
   <section class="panel center">
     <div class="ptitle"><h3>TRAP recurring membership</h3><span class="hint">Click a dot to see that month's members</span></div>
     <div class="grid-2">
@@ -453,7 +453,7 @@ function renderDashboard(){
   </section>
 
   <!-- REVENUE TREND -->
-  <div class="eyebrow"><span class="tag">Context</span> Revenue Over Time</div>
+  <div class="eyebrow"><span class="tag">Total Revenue</span> Membership + Merchandise Combined</div>
   <section class="panel">
     <div class="ptitle"><h3>Monthly revenue by stream</h3><span class="sub">Merch + membership · 2026</span></div>
     <div class="callout neutral">Merch is <b style="color:var(--bone)">event-driven</b>. The big spikes are tentpole months. Current-month softness is likely seasonal, not a decline.</div>
@@ -461,7 +461,7 @@ function renderDashboard(){
   </section>
 
   <!-- OPERATIONS -->
-  <div class="eyebrow"><span class="tag">Operations</span> What's Selling</div>
+  <div class="eyebrow"><span class="tag">Top Products &amp; Categories</span></div>
   <div class="grid-ops">
     <section class="panel">
       <div class="ptitle"><h3>Top products</h3><span class="hint">Click any product</span></div>
@@ -474,7 +474,7 @@ function renderDashboard(){
     </section>
   </div>
 
-  <footer>Data source: Shopify online sales only. Square in-person and TIXR ticketing not included — figures will not match QuickBooks totals.</footer>
+  <footer>Data source: Shopify online sales</footer>
   `;
 
   // Charts
