@@ -338,6 +338,7 @@ function renderDashboard(){
   // Summary months for charts
   const summaryMonths=SUMMARY.map(r=>({
     ts:parseDate(r['Month Start']),
+    label:r['Month Label']||'',
     merch:parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0,
     mem:parseFloat(String(r['Membership Revenue']).replace(/[$,]/g,''))||0,
     active:parseFloat(r['Active Members'])||0,
@@ -373,12 +374,6 @@ function renderDashboard(){
     catMap[c]=(catMap[c]||0)+v;
   });
   const catEntries=Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
-
-  // Membership callout text
-  const lastNewIdx=[...summaryMonths].reverse().findIndex(m=>m.newM>0);
-  const calloutText=lastNewIdx>0
-    ?`Acquisition has <b>paused</b>. After a surge in ${fmtMonth(summaryMonths[summaryMonths.length-1-lastNewIdx+1]?.ts)}, new members fell to zero while the active base declined. The recurring engine is contracting — <b>retention is the priority, not volume.</b>`
-    :`Acquisition has <b>paused</b>. New member signups have stalled while active members are declining. <b>Retention is the priority.</b>`;
 
   document.getElementById('mainContent').innerHTML=`
   <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:26px;flex-wrap:wrap;gap:10px">
@@ -432,13 +427,11 @@ function renderDashboard(){
   <!-- MEMBERSHIP HEALTH -->
   <div class="eyebrow"><span class="tag">Priority</span> Membership Health</div>
   <section class="panel center">
-    <div class="ptitle"><h3>TRAP recurring membership</h3><span class="hint">Click a month or tier for detail</span></div>
-    <div class="callout">${calloutText}</div>
+    <div class="ptitle"><h3>TRAP recurring membership</h3><span class="hint">Click a dot to see that month's members</span></div>
     <div class="grid-2">
       <div class="chart-host" style="height:280px"><canvas id="memChart"></canvas></div>
       <div class="chart-host" style="height:280px"><canvas id="mrrChart"></canvas></div>
     </div>
-    <div class="mo-btns" id="moBtns"></div>
     <div class="tier-row">
       <div class="chart-host" style="height:160px"><canvas id="tierChart"></canvas></div>
       <div class="tier-chips">
@@ -484,47 +477,42 @@ function renderDashboard(){
   <footer>Data source: Shopify online sales only. Square in-person and TIXR ticketing not included — figures will not match QuickBooks totals.</footer>
   `;
 
-  // Month buttons
-  const moBtns=document.getElementById('moBtns');
-  summaryMonths.filter(m=>m.ts.getFullYear()>=2026).forEach(m=>{
-    const btn=document.createElement('button');
-    btn.className='mo-btn';
-    btn.textContent=fmtMonth(m.ts);
-    btn.onclick=()=>openMonthDrawer(m.ts);
-    moBtns.appendChild(btn);
-  });
-
   // Charts
   Chart.defaults.color=BONEDIM;
   Chart.defaults.font.family="Inter, Helvetica Neue, Arial, sans-serif";
   Chart.defaults.font.size=11;
   const gridX={grid:{display:false},border:{color:LINE}};
   const gridY={grid:{color:"rgba(255,255,255,.04)"},border:{display:false}};
-  const memLabels=summaryMonths.filter(m=>m.ts.getFullYear()>=2026).map(m=>fmtMonth(m.ts));
-  const activeVals=summaryMonths.filter(m=>m.ts.getFullYear()>=2026).map(m=>m.active);
-  const newVals=summaryMonths.filter(m=>m.ts.getFullYear()>=2026).map(m=>m.newM);
-  const mrrVals=summaryMonths.filter(m=>m.ts.getFullYear()>=2026).map(m=>m.mrr);
+  const mem2026=summaryMonths.filter(m=>m.ts.getUTCFullYear()>=2026);
+  const memLabels=mem2026.map(m=>m.label||fmtMonth(m.ts));
+  const activeVals=mem2026.map(m=>m.active);
+  const newVals=mem2026.map(m=>m.newM);
+  const mrrVals=mem2026.map(m=>m.mrr);
+  const onDotClick=(e,el)=>{if(el.length){const m=mem2026[el[0].index];if(m)openMonthDrawer(m.ts.getUTCFullYear(),m.ts.getUTCMonth());}};
+  const dotCursor=(e,el)=>{e.native.target.style.cursor=el.length?'pointer':'default';};
 
   new Chart(document.getElementById('memChart'),{
     data:{labels:memLabels,datasets:[
       {type:'bar',label:'New signups',data:newVals,backgroundColor:"rgba(200,16,46,.32)",borderColor:RED,borderWidth:1,borderRadius:3,order:2,barThickness:26},
-      {type:'line',label:'Active members',data:activeVals,borderColor:REDSOFT,backgroundColor:REDSOFT,borderWidth:2.5,tension:.3,pointRadius:4,pointBackgroundColor:REDSOFT,order:1}
+      {type:'line',label:'Active members',data:activeVals,borderColor:REDSOFT,backgroundColor:REDSOFT,borderWidth:2.5,tension:.3,pointRadius:5,pointBackgroundColor:REDSOFT,order:1}
     ]},
     options:{maintainAspectRatio:false,responsive:true,
+      onClick:onDotClick,onHover:dotCursor,
       plugins:{legend:{labels:{boxWidth:10,usePointStyle:true},position:'top',align:'end'}},
       scales:{x:gridX,y:{...gridY,beginAtZero:true,ticks:{precision:0}}}}
   });
 
   new Chart(document.getElementById('mrrChart'),{
     type:'line',
-    data:{labels:memLabels,datasets:[{label:'MRR',data:mrrVals,borderColor:BONE,backgroundColor:"rgba(245,240,232,.06)",fill:true,borderWidth:2,tension:.3,pointRadius:3,pointBackgroundColor:BONE}]},
+    data:{labels:memLabels,datasets:[{label:'MRR',data:mrrVals,borderColor:BONE,backgroundColor:"rgba(245,240,232,.06)",fill:true,borderWidth:2,tension:.3,pointRadius:5,pointBackgroundColor:BONE}]},
     options:{maintainAspectRatio:false,responsive:true,
+      onClick:onDotClick,onHover:dotCursor,
       plugins:{legend:{display:false},title:{display:true,text:'Monthly Recurring Revenue',align:'start',color:BONEDIM,font:{size:11,weight:'600'}}},
       scales:{x:gridX,y:{...gridY,ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k'}}}}
   });
 
-  const revMonths=summaryMonths.filter(m=>m.ts.getFullYear()===cm.getFullYear());
-  const revLabels=revMonths.map(m=>fmtMonth(m.ts));
+  const revMonths=summaryMonths.filter(m=>m.ts.getUTCFullYear()===cm.getFullYear());
+  const revLabels=revMonths.map(m=>m.label||fmtMonth(m.ts));
   new Chart(document.getElementById('revChart'),{
     type:'bar',
     data:{labels:revLabels,datasets:[
@@ -658,13 +646,13 @@ function openTierDrawer(tier){
   openDrawer(`Membership · Tier`,`TRAP ${tier}`,[{l:'Members',v:String(count)},{l:'MRR',v:fmtCurrency(count*price)},{l:'Price',v:`$${price}`}],['Member','Status','Last Charge'],rows);
 }
 
-function openMonthDrawer(ts){
+function openMonthDrawer(yr,mo){
   const filtered=ORDERS.filter(r=>{
-    const d=monthStart(r['Created At']);
-    return d&&d.getTime()===ts.getTime()&&r['Product Category']==='Membership';
+    const d=parseDate(r['Created At']);
+    return d&&d.getFullYear()===yr&&d.getMonth()===mo&&r['Product Category']==='Membership';
   }).sort(byDateDesc);
   const rows=filtered.map(r=>[memName(r),r['Membership Tier'],r['Subscription Event'],fmtDate(r['Created At'])]);
-  const label=fmtMonth(ts);
+  const label=new Date(yr,mo,15).toLocaleDateString('en-US',{month:'short',year:'numeric'});
   const active=new Set(filtered.map(r=>r['Email'].toLowerCase())).size;
   const newM=filtered.filter(r=>r['Subscription Event']==='First Order').length;
   const mrrVal=filtered.reduce((a,r)=>{
