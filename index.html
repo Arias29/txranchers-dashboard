@@ -411,7 +411,7 @@ function renderDashboard(){
   <!-- MONTHLY COMPARISON STRIP -->
   <section class="ytd" style="margin-top:14px">
     <div class="ytd-tag" style="padding:4px 14px">
-      <select id="monthCompSel" style="background:transparent;color:var(--red);border:none;font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;outline:none;font-family:inherit;max-width:80px">${MONTHS.map(m=>{const sel=m.ts.getUTCFullYear()===cm.getFullYear()&&m.ts.getUTCMonth()===cm.getMonth()?'selected':'';return `<option value="${m.ts.getUTCFullYear()}-${m.ts.getUTCMonth()}" ${sel} style="background:var(--panel);color:var(--bone)">${m.label}</option>`;}).join('')}</select>
+      <select id="monthCompSel" style="background:transparent;color:var(--red);border:none;font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;outline:none;font-family:inherit">${MONTHS.map(m=>{const sel=m.ts.getUTCFullYear()===cm.getFullYear()&&m.ts.getUTCMonth()===cm.getMonth()?'selected':'';return `<option value="${m.ts.getUTCFullYear()}-${m.ts.getUTCMonth()}" ${sel} style="background:var(--panel);color:var(--bone)">${m.label}</option>`;}).join('')}</select>
     </div>
     <div class="ytd-item" onclick="openCardDrawer('totalRev')">
       <span class="yl">Total Revenue</span><span class="yv">${fmtCurrency(totalRev)}</span>
