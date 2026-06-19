@@ -224,8 +224,8 @@ function fmtMonth(d){
 
 function fmtCurrency(v){
   const n=parseFloat(String(v).replace(/[$,]/g,''));
-  if(isNaN(n)) return '$0.00';
-  return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  if(isNaN(n)) return '$0';
+  return '$'+Math.round(n).toLocaleString('en-US');
 }
 
 function fmtDelta(curr,prior){
@@ -233,7 +233,7 @@ function fmtDelta(curr,prior){
   const pct=((curr-prior)/prior)*100;
   const arrow=pct>=0?'▲':'▼';
   const cls=pct>=0?'up':'dn';
-  return {html:`${arrow} ${Math.abs(pct).toFixed(1)}% <span class="mo">vs prior mo</span>`,cls};
+  return {html:`${arrow} ${Math.round(Math.abs(pct))}% <span class="mo">vs prior mo</span>`,cls};
 }
 
 function getSummaryVal(col,monthTs){
@@ -520,7 +520,7 @@ function renderDashboard(){
     data:{labels:memLabels,datasets:[{label:'MRR',data:mrrVals,borderColor:BONE,backgroundColor:"rgba(245,240,232,.06)",fill:true,borderWidth:2,tension:.3,pointRadius:3,pointBackgroundColor:BONE}]},
     options:{maintainAspectRatio:false,responsive:true,
       plugins:{legend:{display:false},title:{display:true,text:'Monthly Recurring Revenue',align:'start',color:BONEDIM,font:{size:11,weight:'600'}}},
-      scales:{x:gridX,y:{...gridY,ticks:{callback:v=>'$'+(v/1000).toFixed(1)+'k'}}}}
+      scales:{x:gridX,y:{...gridY,ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k'}}}}
   });
 
   const revMonths=summaryMonths.filter(m=>m.ts.getFullYear()===cm.getFullYear());
