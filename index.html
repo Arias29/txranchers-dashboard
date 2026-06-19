@@ -522,7 +522,10 @@ function renderDashboard(){
       {label:'Membership',data:revMonths.map(m=>m.mem),backgroundColor:RED,stack:'s',borderRadius:2}
     ]},
     options:{maintainAspectRatio:false,responsive:true,
-      plugins:{legend:{labels:{boxWidth:10},position:'top',align:'end'}},
+      plugins:{
+        legend:{labels:{boxWidth:10},position:'top',align:'end'},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: $${Math.round(ctx.parsed.y).toLocaleString('en-US')}`}}
+      },
       scales:{x:{...gridX,ticks:{maxRotation:0,autoSkip:true,font:{size:9.5}}},y:{...gridY,ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k'}}}}
   });
 
