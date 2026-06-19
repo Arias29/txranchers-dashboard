@@ -602,10 +602,12 @@ function openCardDrawer(key){
 
 function openYtdDrawer(key){
   const s=window._state;
-  const ytdStart=new Date(s.cm.getFullYear(),0,1);
-  const now=new Date();
-  const ytdEnd=new Date(now.getFullYear(),now.getMonth(),1);
-  const ytdSum=SUMMARY.filter(r=>{const d=parseDate(r['Month Start']);return d&&d>=ytdStart&&d<=ytdEnd;}).sort((a,b)=>parseDate(b['Month Start'])-parseDate(a['Month Start']));
+  const yr=s.cm.getFullYear();
+  const nowUTCMonth=new Date().getUTCMonth();
+  const ytdSum=SUMMARY.filter(r=>{
+    const d=parseDate(r['Month Start']);
+    return d&&d.getUTCFullYear()===yr&&d.getUTCMonth()<=nowUTCMonth;
+  }).sort((a,b)=>parseDate(b['Month Start'])-parseDate(a['Month Start']));
   if(key==='total'){
     const rows=ytdSum.map(r=>{
       const m=parseFloat(String(r['Merch Revenue']).replace(/[$,]/g,''))||0;
