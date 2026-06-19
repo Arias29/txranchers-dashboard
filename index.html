@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Texas Ranchers — Revenue & Membership</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
@@ -16,8 +17,10 @@
   .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
   header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#121317 0%,var(--bg) 100%);position:sticky;top:0;z-index:10;backdrop-filter:blur(6px)}
   .hbar{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 0;flex-wrap:wrap}
-  .mark{font-weight:800;letter-spacing:.16em;text-transform:uppercase;font-size:15px;color:var(--bone);border-left:3px solid var(--red);padding-left:12px;line-height:1.05}
-  .mark span{display:block;color:var(--bone-dim);font-size:10px;letter-spacing:.28em;font-weight:600}
+  .mark{line-height:1;display:flex;flex-direction:column;gap:1px}
+  .mark .tx{font-family:'Barlow Condensed',Arial,sans-serif;font-weight:800;font-size:11px;letter-spacing:.35em;text-transform:uppercase;color:var(--bone-dim)}
+  .mark .rx{font-family:'Barlow Condensed',Arial,sans-serif;font-weight:900;font-size:32px;letter-spacing:.06em;text-transform:uppercase;color:var(--red);line-height:.95}
+  .mark span{font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--bone-dim);font-weight:600;margin-top:3px}
   .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   select,.glink{background:var(--panel-2);color:var(--bone);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:12.5px;font-family:inherit;cursor:pointer}
   .toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;user-select:none}
@@ -25,9 +28,9 @@
   .glink{text-decoration:none;color:var(--bone-dim)}
   .glink:hover{color:var(--bone);border-color:var(--red)}
   .stamp{color:var(--ink-dim);font-size:11px}
-  .eyebrow{display:flex;align-items:center;gap:10px;text-transform:uppercase;letter-spacing:.22em;font-size:10.5px;font-weight:700;color:var(--bone-dim);margin:38px 0 14px}
+  .eyebrow{display:flex;align-items:center;gap:10px;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:700;color:var(--bone-dim);margin:38px 0 14px}
   .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
-  .eyebrow .tag{color:var(--red)}
+  .eyebrow .tag{color:var(--red);font-family:'Barlow Condensed',Arial,sans-serif;font-weight:800;font-size:14px;letter-spacing:.14em}
   .hero{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
   .hero-ytd{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:22px}
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;cursor:pointer;transition:border-color .15s}
@@ -47,7 +50,7 @@
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
   .panel.center{border-color:#3a2026;box-shadow:0 0 0 1px rgba(200,16,46,.12),0 18px 40px -28px rgba(200,16,46,.5)}
   .ptitle{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:4px}
-  .ptitle h3{font-size:16px;font-weight:700}
+  .ptitle h3{font-size:20px;font-weight:800;font-family:'Barlow Condensed',Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase}
   .ptitle .sub{font-size:11.5px;color:var(--ink-dim)}
   .callout{font-size:13px;background:rgba(200,16,46,.08);border-left:3px solid var(--red);border-radius:0 8px 8px 0;padding:10px 14px;margin:12px 0 16px;line-height:1.6}
   .callout b{color:var(--red-soft)}
@@ -134,7 +137,7 @@
 <div id="app" style="display:none">
   <header>
     <div class="wrap hbar">
-      <div class="mark">Texas Ranchers<span>Membership &amp; Merchandise</span></div>
+      <div class="mark"><span class="tx">Texas</span><span class="rx">Ranchers</span><span>Membership &amp; Merchandise</span></div>
       <div class="controls">
         <label class="toggle"><input type="checkbox" id="exInternal"> Exclude internal</label>
         <a class="glink" href="https://docs.google.com/spreadsheets/d/1_2yQg56wqCuBA4WOyj4JrWyOLQeQR-3IO1Ju7V96y_g" target="_blank">View in Sheets ↗</a>
