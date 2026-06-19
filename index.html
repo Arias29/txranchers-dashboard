@@ -524,13 +524,20 @@ function renderDashboard(){
   });
 
   const catColors=[RED,REDSOFT,"#7E1220","#E8836F","#C9A24B","#5FB87A","#5B6BB0","#6E727A"];
+  const catTotal=catEntries.reduce((s,c)=>s+c[1],0);
   const catChart=new Chart(document.getElementById('catChart'),{
     type:'doughnut',
     data:{labels:catEntries.map(c=>c[0]),datasets:[{data:catEntries.map(c=>c[1]),backgroundColor:catColors.slice(0,catEntries.length),borderColor:"#16181C",borderWidth:2}]},
     options:{maintainAspectRatio:false,responsive:true,cutout:'62%',
       onClick:(e,el)=>{if(el.length)openCategoryDrawer(catEntries[el[0].index][0]);},
       onHover:(e,el)=>{e.native.target.style.cursor=el.length?'pointer':'default';},
-      plugins:{legend:{position:'right',labels:{boxWidth:10,padding:9,font:{size:11}}}}}
+      plugins:{legend:{position:'right',labels:{boxWidth:10,padding:10,font:{size:11},
+        generateLabels:()=>catEntries.map((c,i)=>({
+          text:`${c[0]}   ${fmtCurrency(c[1])}  (${Math.round(c[1]/catTotal*100)}%)`,
+          fillStyle:catColors[i%catColors.length],
+          strokeStyle:'#16181C',lineWidth:2,hidden:false,index:i
+        }))
+      }}}}
   });
 
   // Top products list
