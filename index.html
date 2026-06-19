@@ -183,7 +183,7 @@ function checkPw(){
 document.getElementById('pwInput').addEventListener('keydown',e=>{if(e.key==='Enter')checkPw();});
 
 // ── DATA ────────────────────────────────────────────────────────────────────
-let SUMMARY=[], ORDERS=[], currentMonth=null, priorMonth=null;
+let SUMMARY=[], ORDERS=[], MONTHS=[], currentMonth=null, priorMonth=null;
 let summaryHeaders=[], ordersHeaders=[];
 
 async function fetchSheet(range){
@@ -258,8 +258,16 @@ async function loadData(){
     summaryHeaders=sum.headers;
     ordersHeaders=ord.headers;
 
-    // Lock to last full calendar month
+    // Build available months list (Jan 2025 up to current month)
     const now=new Date();
+    MONTHS=SUMMARY
+      .filter(r=>r['Month Start']&&r['Month Label'])
+      .map(r=>({ts:parseDate(r['Month Start']),label:r['Month Label']}))
+      .filter(r=>r.ts&&r.ts.getUTCFullYear()>=2025&&
+        (r.ts.getUTCFullYear()<now.getUTCFullYear()||(r.ts.getUTCFullYear()===now.getUTCFullYear()&&r.ts.getUTCMonth()<=now.getUTCMonth())))
+      .sort((a,b)=>b.ts-a.ts);
+
+    // Lock to last full calendar month by default
     currentMonth=new Date(now.getFullYear(),now.getMonth()-1,1);
     priorMonth=new Date(now.getFullYear(),now.getMonth()-2,1);
 
@@ -403,7 +411,9 @@ function renderDashboard(){
 
   <!-- MONTHLY COMPARISON STRIP -->
   <section class="ytd" style="margin-top:14px">
-    <div class="ytd-tag">${fmtMonth(cm).split(' ')[0]}<br>${fmtMonth(cm).split(' ')[1]}</div>
+    <div class="ytd-tag" style="padding:4px 14px">
+      <select id="monthCompSel" style="background:transparent;color:var(--red);border:none;font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;outline:none;font-family:inherit;max-width:80px">${MONTHS.map(m=>{const sel=m.ts.getUTCFullYear()===cm.getFullYear()&&m.ts.getUTCMonth()===cm.getMonth()?'selected':'';return `<option value="${m.ts.getUTCFullYear()}-${m.ts.getUTCMonth()}" ${sel} style="background:var(--panel);color:var(--bone)">${m.label}</option>`;}).join('')}</select>
+    </div>
     <div class="ytd-item" onclick="openCardDrawer('totalRev')">
       <span class="yl">Total Revenue</span><span class="yv">${fmtCurrency(totalRev)}</span>
       <div class="delta ${d1.cls}" style="font-size:10.5px;margin-top:3px">${d1.html}</div>
@@ -548,6 +558,14 @@ function renderDashboard(){
     div.innerHTML=`<span class="nm">${name}</span><span class="amt">${fmtCurrency(rev)}</span><span class="bar"><i style="width:${pct}%"></i></span>`;
     div.onclick=()=>openProductDrawer(name);
     prodList.appendChild(div);
+  });
+
+  // Month comparison selector
+  document.getElementById('monthCompSel').addEventListener('change',function(){
+    const [y,mo]=this.value.split('-').map(Number);
+    currentMonth=new Date(y,mo,1);
+    priorMonth=new Date(y,mo-1,1);
+    renderDashboard();
   });
 
   // Store refs for drawers
