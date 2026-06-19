@@ -349,18 +349,19 @@ function renderDashboard(){
   const seniorCount=new Set(memCm.filter(r=>r['Membership Tier']==='Senior').map(r=>r['Email'].toLowerCase())).size;
   const adultMrr=adultCount*150, juniorMrr=juniorCount*160, seniorMrr=seniorCount*150;
 
-  // Top products
+  // Top products — 2026 only
+  const merch2026=fOrders.filter(r=>r['Product Category']==='Merchandise'&&(parseDate(r['Created At'])||new Date(0)).getFullYear()===cm.getFullYear());
   const prodMap={};
-  fOrders.filter(r=>r['Product Category']==='Merchandise').forEach(r=>{
+  merch2026.forEach(r=>{
     const n=r['Line Item Title'],v=parseFloat(String(r['Adjusted Revenue']).replace(/[$,]/g,''))||0;
     if(n) prodMap[n]=(prodMap[n]||0)+v;
   });
   const topProds=Object.entries(prodMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
   const maxProd=topProds[0]?topProds[0][1]:1;
 
-  // Category mix
+  // Category mix — 2026 only
   const catMap={};
-  fOrders.filter(r=>r['Product Category']==='Merchandise').forEach(r=>{
+  merch2026.forEach(r=>{
     const c=r['Merch Bucket']||'Other',v=parseFloat(String(r['Adjusted Revenue']).replace(/[$,]/g,''))||0;
     catMap[c]=(catMap[c]||0)+v;
   });
@@ -454,7 +455,7 @@ function renderDashboard(){
   <!-- REVENUE TREND -->
   <div class="eyebrow"><span class="tag">Context</span> Revenue Over Time</div>
   <section class="panel">
-    <div class="ptitle"><h3>Monthly revenue by stream</h3><span class="sub">Merch + membership · full history</span></div>
+    <div class="ptitle"><h3>Monthly revenue by stream</h3><span class="sub">Merch + membership · 2026</span></div>
     <div class="callout neutral">Merch is <b style="color:var(--bone)">event-driven</b>. The big spikes are tentpole months. Current-month softness is likely seasonal, not a decline.</div>
     <div class="chart-host" style="height:300px"><canvas id="revChart"></canvas></div>
   </section>
@@ -465,7 +466,7 @@ function renderDashboard(){
     <section class="panel">
       <div class="ptitle"><h3>Top products</h3><span class="hint">Click any product</span></div>
       <div class="prod-list" id="prodList"></div>
-      <div class="note">All-time · customer orders${document.getElementById('exInternal').checked?' only':' (includes internal)'}</div>
+      <div class="note">2026 · customer orders${document.getElementById('exInternal').checked?' only':' (includes internal)'}</div>
     </section>
     <section class="panel">
       <div class="ptitle"><h3>Category mix</h3><span class="hint">Click a slice</span></div>
@@ -515,12 +516,13 @@ function renderDashboard(){
       scales:{x:gridX,y:{...gridY,ticks:{callback:v=>'$'+(v/1000).toFixed(1)+'k'}}}}
   });
 
-  const revLabels=summaryMonths.map(m=>fmtMonth(m.ts));
+  const revMonths=summaryMonths.filter(m=>m.ts.getFullYear()===cm.getFullYear());
+  const revLabels=revMonths.map(m=>fmtMonth(m.ts));
   new Chart(document.getElementById('revChart'),{
     type:'bar',
     data:{labels:revLabels,datasets:[
-      {label:'Merch',data:summaryMonths.map(m=>m.merch),backgroundColor:"rgba(245,240,232,.55)",stack:'s',borderRadius:2},
-      {label:'Membership',data:summaryMonths.map(m=>m.mem),backgroundColor:RED,stack:'s',borderRadius:2}
+      {label:'Merch',data:revMonths.map(m=>m.merch),backgroundColor:"rgba(245,240,232,.55)",stack:'s',borderRadius:2},
+      {label:'Membership',data:revMonths.map(m=>m.mem),backgroundColor:RED,stack:'s',borderRadius:2}
     ]},
     options:{maintainAspectRatio:false,responsive:true,
       plugins:{legend:{labels:{boxWidth:10},position:'top',align:'end'}},
