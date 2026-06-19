@@ -382,10 +382,7 @@ function renderDashboard(){
 
   document.getElementById('mainContent').innerHTML=`
   <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:26px;flex-wrap:wrap;gap:10px">
-    <div>
-      <div style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--bone-dim);font-weight:700">State of the Business</div>
-      <div style="font-size:13px;color:var(--ink-dim);margin-top:4px">Period: <b style="color:var(--bone)">${fmtMonth(cm)}</b> · compared to ${pm?fmtMonth(pm):'prior month'}</div>
-    </div>
+    <div style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--bone-dim);font-weight:700">State of the Business</div>
     <div class="stamp">Live data · refreshed on load</div>
   </div>
 
@@ -410,8 +407,9 @@ function renderDashboard(){
 
   <!-- MONTHLY COMPARISON STRIP -->
   <section class="ytd" style="margin-top:14px">
-    <div class="ytd-tag" style="padding:4px 14px">
+    <div class="ytd-tag" style="padding:4px 14px;flex-direction:column;align-items:flex-start;gap:2px">
       <select id="monthCompSel" style="background:transparent;color:var(--red);border:none;font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;outline:none;font-family:inherit">${MONTHS.map(m=>{const sel=m.ts.getUTCFullYear()===cm.getFullYear()&&m.ts.getUTCMonth()===cm.getMonth()?'selected':'';return `<option value="${m.ts.getUTCFullYear()}-${m.ts.getUTCMonth()}" ${sel} style="background:var(--panel);color:var(--bone)">${m.label}</option>`;}).join('')}</select>
+      <div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);white-space:nowrap">vs ${pm?fmtMonth(pm):'prior mo'}</div>
     </div>
     <div class="ytd-item" onclick="openCardDrawer('totalRev')">
       <span class="yl">Total Revenue</span><span class="yv">${fmtCurrency(totalRev)}</span>
