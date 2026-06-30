@@ -257,8 +257,8 @@ function getSummaryVal(col,monthTs){
 async function loadData(){
   try{
     const [sumVals,ordVals]=await Promise.all([
-      fetchSheet('Monthly Summary!A:P'),
-      fetchSheet('Orders!A:BJ')
+      fetchSheet('Clean Monthly Summary!A:P'),
+      fetchSheet('Clean Orders!A:BJ')
     ]);
     const sum=parseRows(sumVals);
     const ord=parseRows(ordVals);
